@@ -1,0 +1,207 @@
+---
+title: "plots_for_ms"
+author: "Netra_Bhandari"
+date: "4/13/2021"
+output: html_document
+---
+
+```{r}
+setwd("F:/leipzig/CS spatial pattern/survey_data/Survey_data/figures in english")
+library(cowplot)
+library(patchwork)
+library(gridExtra)
+library(grid)
+```
+
+```{r warning=FALSE}
+#fig 1
+
+#Demographics of CS - Panel plot: Age, Gender, 
+#and number of years of experience and frequency of collecting data
+
+(panel_a <- grid.arrange(
+      gender_plot + ggtitle("(a)") + ylab("Count") + xlab("Gender") +   # adding labels to the different plots
+      theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), units = , "cm"),
+           plot.title.position = "plot",
+           plot.title = element_text(size = 30)),
+        
+      age_plot + ggtitle("(b)") + ylab("") + xlab("") +
+      theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), units = , "cm"),
+            plot.title.position = "plot",
+            plot.title = element_text(size = 30)),
+      
+      ncol = 2 )) 
+
+panel_a<- grid.arrange(panel_a,map+ggtitle("(c)") + ylab("") + xlab("") +
+      theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), units = , "cm"),
+            plot.title.position = "plot",
+            plot.title = element_text(size = 30)))
+
+ggsave(panel_a, file = "panel1a.png", width = 28, height = 20, units = "in") 
+
+(panel_b <- grid.arrange(
+      experience_plot + ggtitle("(a)")+
+      theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), units = , "cm"),
+            plot.title.position = "plot",
+            plot.title = element_text(size = 30)),
+      
+      regularity_plot + ggtitle("(b)") +   
+      theme(plot.margin = unit(c(0.1,0.1,0.1,0.1), units = , "cm"),
+           plot.title.position = "plot",
+           plot.title = element_text(size = 30)),
+      
+  widths = c(1,1.2),heights = c(0.9,0.9), nrow = 2))
+
+ggsave(panel_b, file = "panel1b.png", width = 29, height = 19, units = "in")
+
+```
+
+```{r}
+#figure 2 motivation
+
+motivation_plot<- lik_imp_obs
+ggsave(motivation_plot, file = "fig2.png", width = 41, height = 19, units = "in") 
+
+```
+
+```{r}
+## fig 3 panel plot
+#taxa preference
+
+require(grid)
+grid.newpage()
+
+(panel3 <- grid.arrange(taxa_pref1+ ggtitle("(a)")  +   # adding labels to the different plots
+          theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), units = , "cm"),
+           plot.title.position = "plot",
+           plot.title = element_text(size = 30)),
+      
+           taxa_2+ ggtitle("(b)") + 
+            theme(plot.margin = unit(c(0.5,0.35,0.5,0.35), units = , "cm"),
+            plot.title.position = "plot",
+            plot.title = element_text(size = 30)),
+      
+      ncol = 2, nrow = 1, widths = c(1,1.2)))
+
+ggsave(panel3, file = "fig3.png", width = 35, height = 14, units = "in") 
+```
+
+```{r}
+#fig 4 types of survey
+
+survey_method <- ques3_plot_2
+ggsave(survey_method, file = "fig4.png", width = 13, height = 8, units = "in")
+
+```
+
+```{r}
+#fig 5
+active <- ques4b_plot_new
+incidental <- ques5_plot_new
+
+(panel4 <- grid.arrange(active+ ggtitle("(a)")  +   # adding labels to the different plots
+          theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), units = , "cm"),
+           plot.title.position = "plot",
+           plot.title = element_text(size = 30)),
+      
+          incidental+ ggtitle("(b)") + 
+          theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), units = , "cm"),
+            plot.title.position = "plot",
+            plot.title = element_text(size = 30)),
+      
+          ncol = 2, nrow = 1))
+
+
+
+ggsave(panel4, file = "fig5.png", width = 40, height = 20, units = "in") 
+      
+
+```
+
+```{r}
+#fig 6 
+uncertainity_plot <- ques9_plot_new
+ggsave(uncertainity_plot, file = "fig6.png", width = 13, height = 10, units = "in") 
+```
+
+
+```{r}
+#Fig 7 habitat preference
+habitat_preference <-lik1
+ggsave(habitat_preference, file = "fig7.png", width = 41, height = 19, units = "in") 
+```
+
+```{r}
+
+temporal_dependence <- lik2
+ggsave(temporal_dependence, file = "fig8.png", width = 35, height = 16, units = "in") 
+```
+
+```{r}
+#fig 9 duration
+duration <- ques4a_plot+xlab("Focal taxa")
+ggsave(duration, file = "fig9_new.png", width = 14, height = 10, units = "in") 
+```
+
+```{r}
+
+#map 
+ggsave(map, filename = "map_ms.png",width = 10, height =7, units = "in")
+```
+
+
+```{r}
+## supplementary fig 1
+# types of platforms
+types_of_platforms <- alluvial
+ggsave(types_of_platforms, filename = "fig1_supp.png",width = 10, height =7, units = "in")
+
+```
+
+```{r}
+## supplementary fig 2
+treemap # this was saved using export option 
+
+```
+
+```{r}
+## supplementary fig 3
+covid_plot <- covid
+ggsave(covid, filename = "fig3_supp.png",width = 10, height =9, units = "in")
+```
+
+```{r}
+## supplementary fig 4
+
+capture_window <- ques6_plot
+ggsave(capture_window, filename = "fig4_supp.png",width = 10, height =7, units = "in")
+
+```
+
+```{r}
+## supplementary fig 5 
+trap_scheme <- ques8_plot_new
+ggsave(trap_scheme, filename = "fig5_supp.png",width = 10, height =8, units = "in")
+```
+
+```{r}
+## supplementary fig 6 
+biodiv_monitor <- exp
+ggsave(biodiv_monitor, filename = "fig6_supp.png",width = 5, height =4, units = "in")
+
+```
+
+```{r}
+## supplementary fig 7 
+membership <- member_plot
+ggsave(membership, filename = "fig7_supp.png",width = 5, height =4, units = "in")
+
+```
+
+```{r}
+## supplementary fig 8 
+skills_plot 
+ggsave(skills_plot, filename = "fig8_supp.png", width = 5, height =4, units = "in")
+
+```
+
