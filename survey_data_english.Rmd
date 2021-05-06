@@ -25,9 +25,7 @@ library(ggplot2)
 library(sjmisc)
 library(likert)
 library(viridis)
-library(formattable)
 library(scales)
-library(hrbrthemes)
 #install.packages("wordcloud")
 library(wordcloud)
 #install.packages("RColorBrewer")
@@ -36,7 +34,6 @@ library(RColorBrewer)
 library(wordcloud2)
 #install.packages("tm")
 library(tm)
-library(gggibbous) #used for moonplots
 library(cowplot)
 library(patchwork)
 library(tidyverse)
@@ -67,7 +64,7 @@ swr = Vectorize(swr)
 #read in the dataset
 #make sure to use the correct encoding 
 #to take german characters into account
-survey_data <- read.csv("results-survey796935.csv",encoding = "UTF-8")
+survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
 
 head(survey_data)
 colnames(survey_data) <- gsub("Vogel","Vögel", colnames(survey_data))
@@ -261,8 +258,8 @@ okabe <- c('#fde0dd','#fff7f3','#fcc5c0','#f768a1','#fa9fb5','#dd3497','#ae017e'
 groups <- tibble(
   Frequency= c(94,  24,  50 , 40, 187,  79 ,140 ,403),
   Group = c("Amphibians/\nReptiles","Bees","Beetles","Dragonflies","Plants","Butterflies","Others","Birds"),
-  image = c("./symbols/amphibians.png","./symbols/bee.png","./symbols/beetle.png",
-            "./symbols/dragonfly.png","./symbols/plant.png","./symbols/butterfly.png","./symbols/reptile.png","./symbols/bird.png"))
+  image = c("data/symbols/amphibians.png","data/symbols/bee.png","data/symbols/beetle.png",
+            "data/symbols/dragonfly.png","data/symbols/plant.png","data/symbols/butterfly.png","data/symbols/reptile.png","data/symbols/bird.png"))
 
 groups <- groups %>% mutate(perc = Frequency*100/sum(Frequency))
 
@@ -382,7 +379,7 @@ groups_others <- data.frame(table(groups_others$rename))
 
 #write.csv(groups_others,"groups_others.csv")#change in deepl to english names
 
-english_names <- read.csv("groups_others.csv") #use from dropbox
+english_names <- read.csv("data/groups_others.csv") #use from dropbox
 
 groups_others$eng_group <- english_names$Group.1
 
@@ -390,7 +387,7 @@ colnames(groups_others) <- c("de_group","Frequency","en_group")
 
 
 #create a treemap=============================================================================
-#png("Please select ONE species group.png")
+#png("plots/Please select ONE species group.png")
 
 tm <- treemap(groups_others,
               index=c("en_group"),
@@ -449,7 +446,7 @@ prior_data$subgroup <- gsub("Salamander", "Salamandridae", prior_data$subgroup)
 prior_data$subgroup <- gsub("Salamandridaeidae", "Salamandridae", prior_data$subgroup)
 
 #write.csv( prior_data,"prior_de.csv")
-prior_data <- read.csv("prior_de.csv") #this contains translated columns (check dropbox)
+prior_data <- read.csv("data/prior_de.csv") #this contains translated columns (check dropbox)
 
 #create tree map by transforming variables into fators==============================================
 prior_data <- transform(prior_data, data.available = factor(!is.na(subgroup)), x = 1) 
@@ -1157,7 +1154,7 @@ ques7 <-ques7 %>%
 #Create a vector containing only the text
 
 text <- ques7$Response
-text <- read.csv("types_of_traps.csv") #from dropbox
+text <- read.csv("data/types_of_traps.csv") #from dropbox
 text <- data.frame(response = text$Response.1)
 text$response <- gsub(pattern = "camphibian","amphibian",text$response)
 text$response <- gsub(pattern = "trap","traps",text$response)
@@ -1179,7 +1176,7 @@ matrix <- as.matrix(dtm)
 words <- sort(rowSums(matrix),decreasing=TRUE) 
 df <- data.frame(word = names(words),freq=words)
 
-#png("Which_types_of_XXX_traps_do_you_use.png", width=12, height=8, units="in", res=300)
+#png("plots/Which_types_of_XXX_traps_do_you_use.png", width=12, height=8, units="in", res=300)
 
 wc_traps <- wordcloud(words = df$word, freq = df$freq, min.freq = 1,           
             max.words=400, random.order=FALSE, rot.per=0.35,scale = c(14,2),         
@@ -1377,7 +1374,7 @@ ques9_hi_lo$response <- factor(ques9_hi_lo$response, levels= levels)
 share_obs <- data.frame(Var1 = survey_data$Wie_teilen_Sie_sonst_ihre_Beobachten_mit_anderen.)
 
 share_obs <- share_obs %>% filter(!Var1 == "")
-share_obs <- read.csv("share_obs_en.csv", header = T) #from dropbox
+share_obs <- read.csv("data/share_obs_en.csv", header = T) #from dropbox
 
 #create a word cloud===================================================================
 
@@ -1397,7 +1394,7 @@ df <- data.frame(word = names(words),freq=words)
 
 set.seed(1234) # for reproducibility 
 
-#png("How_do_you_otherwise_share_your_observations_with_others.png", width=12, height=8, units="in", res=300)
+#png("plots/How_do_you_otherwise_share_your_observations_with_others.png", width=12, height=8, units="in", res=300)
 wc1 <- wordcloud(words = df$word, freq = df$freq, min.freq = 1,           
           max.words=200, random.order=FALSE, rot.per=0.35,scale=c(14,2),         
           colors=brewer.pal(8, "Dark2"))
@@ -1867,7 +1864,7 @@ library(viridis)
 
 comments <- data.frame(comments = survey_data$Haben_Sie_noch_weitere_Anmerkungen._Hier_können_Sie_zusätzliche_Kommentare_zu_den_Fragen_oder_zur_Umfrage_abgeben._)
 
-comments <- read.csv("comments_en.csv", header =  T) #english version
+comments <- read.csv("data/comments_en.csv", header =  T) #english version
 
 #create a word cloud=====================================================
 #select text
@@ -1886,7 +1883,7 @@ words <- sort(rowSums(matrix),decreasing=TRUE)
 df <- data.frame(word = names(words),freq=words)
 
 set.seed(1234) # for reproducibility 
-png("Do_you_have_any_other_comments_Here_you_can_make_additional_comments_on_the_questions_or_the_survey.png",width=12, height=8, units="in", res=300)
+png("plots/Do_you_have_any_other_comments_Here_you_can_make_additional_comments_on_the_questions_or_the_survey.png",width=12, height=8, units="in", res=300)
 
 
   
