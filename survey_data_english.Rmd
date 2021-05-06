@@ -1135,7 +1135,7 @@ ques7 <- all_questions %>% filter(str_detect(Question, 'Welche_Typen_von_|_verwe
 #detect strings and remove extra strings
 
 ques7$Question <- gsub("Welche_Typen_von_","",ques7$Question)
-ques7$Question <- gsub(".Falle_verwendet_haben.wie_lang_war_typischerweise_das_Erfassungs.Zeitfenster.__."," ",ques7$Question)
+ques7$Question <- gsub(".verwenden_Sie._.Bitte_trennen_Sie_diese_jeweils_mit_einem_Komma.__"," ",ques7$Question)
 ques7$Question <- gsub(pattern = "Käfer.","",ques7$Question)
 ques7$Question <- gsub(pattern = "Amphibien.Reptilien.","",ques7$Question) 
 ques7$Question <- gsub(pattern = "Schmetterlings.","",ques7$Question)
