@@ -1,7 +1,0 @@
-The following folder contains - 
-a) results-survey796935.csv - original survey data (in german)
-b) postalCodesGermany1st2letters.shp - shapefile for german postcodes
-c) gadm36_DEU_1_sp.rds - German administrative boundaries
-d) share_obs.csv - translated to english for question "Wie teilen Sie sonst ihre Beobachten mit anderen?"
-e) types_of_traps.csv - translated to english for question "Welche Typen von XXX.Fallen verwenden Sie Bitte trennen Sie diese jeweils mit einem Komma
-f)
