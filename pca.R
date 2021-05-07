@@ -1,16 +1,19 @@
 # PCA ---------------------------------------------------------------------
 
-
 #library(devtools)
 #install_github("vqv/ggbiplot")
 library(ggbiplot)
 library(dplyr)
 library(tidyverse)
 
-#load dataset
+### load dataset ###
 
-setwd("F:/leipzig/CS spatial pattern/survey_data/Survey_data/figures in english")
 survey_data <- read.csv("results-survey796935.csv",encoding = "UTF-8")
+
+#the following line Diana needed to do so that Netras script worked:
+names(survey_data) <- sapply(names(survey_data), function(x)gsub("\\.","_",x))
+
+#### function #####
 
 #replace ordinal scale to a numeric scale
 
@@ -39,45 +42,113 @@ ordinal_fn <- function(x){
   
 }
 
-#arrange questions per taxa
-survey_data <- 
+### subset to people completing most of the survey ####
+
 pca_data <- survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
 colnames(pca_data)[1]<- "ID"
 
+### function to pull data for a specific taxa ####
 
-plants <- data.frame(pca_data[,grepl("Pflanzen", names(survey_data)) ])
-plants <- as.data.frame(lapply(plants, factor)) 
+getTaxaData <- function(myTaxa){ 
+  
+pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_wählen_Sie_EINE_Artengruppe__),]
+taxa <- data.frame(pca_data[,grepl(paste0(myTaxa,collapse="|"), names(survey_data))])
+
+### #get other question (without taxa in question) ####
+
+otherQuestions <- c("Stellen_Sie_sich_vor__Sie_besuchen_einen_Ort",
+                    "wie_oft_haben_Sie_an_den_folgenden_Orte")
+
+#get columns with these headings
+other_data <- pca_data[,grepl(paste0(otherQuestions,collapse="|"),names(pca_data))]
+ 
+### combine all questions ####
+
+pca_data <- cbind(taxa,  other_data)
+
+### clean data for PCA ####
+
+pca_data <- as.data.frame(lapply(pca_data, factor)) 
+pca_data <- ordinal_fn(pca_data)
+sample_data <- mutate_all(pca_data, function(x) as.numeric(as.character(x)))
+
+return(sample_data)
+
+}
+
+### get taxa data frames ####
+
+#get birdDF
+birdDF <- getTaxaData(c("Vogel","Vögel"))
+
+#get plantsDF
+plantDF <- getTaxaData("Pflanz")
+
+#get insectDF
+butterflyDF <- getTaxaData("Schmett")
+dragonflyDF <- getTaxaData("Libelle")
+beetleDF <- getTaxaData(c("Kafer","Käfer"))
+beeDF <- getTaxaData("Biene")
+insectDF <- rbind(butterflyDF,dragonflyDF,beetleDF,beeDF)# you need to fix the headings somehow....
+
+#get amphibians
+frogsDF <- getTaxaData("Amphibien")
 
 
-plants <- ordinal_fn(plants)
-plants$focal_taxa <- "plants"
-plants$ID <- pca_data$ID
-plants <- plants %>% select(ID,focal_taxa, everything())
+### function for pca per question ####
 
-## PCA 
+doTaxaPCA <- function(sample_data){
 
-sample_data <- plants[,-c(1:9)] 
-sample_data <- sample_data[,-c(4,5,18)]
-sample_data <- sample_data %>% filter(!sample_data == "") #removing NAs will reduce data from 900 to 171
+#q1
+sample_data_Q <- sample_data[,grepl("Wenn_Sie_aktiv_auf_die_Suche_nach_Vögel_gegangen_sind__wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
+names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+sample_data_Q <- na.omit(sample_data_Q)
+names(sample_data_Q) <- c("complete_checklist","all_species","interesting_species","common_species",
+                          "rare_species")
+fit <-  prcomp(sample_data_Q, scale = TRUE)
+q1 <- ggbiplot(fit, obs.scale = 1, var.scale = 1)+
+  theme_classic()+
+  ggtitle("Which species are reporting during an active search?")
 
-sample_data <- na.omit(sample_data)#removing NAs will reduce data from 171 to 136
+#q2
+sample_data_Q <- sample_data[,grepl("Was_veranlasst_Sie_dazu",names(sample_data))]
+names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][3])
+sample_data_Q <- na.omit(sample_data_Q)
+names(sample_data_Q) <- c("rare_species","many_species_at_same_time", "unexpected_species",
+                          "first_time of_year","unknown_species","many_indivdiduals_at_the_same_time",
+                          "interesing_species")
+fit <-  prcomp(sample_data_Q, scale = TRUE)
+q2 <- ggbiplot(fit, obs.scale = 1, var.scale = 1)+
+  theme_classic()+
+  ggtitle("What triggers the reporting of an incidental observation?")
 
-sample_data <- mutate_all(sample_data, function(x) as.numeric(as.character(x)))
+#q3
+sample_data_Q <- sample_data[,grepl("wenn_Sie_sich_bei_der_Bestimmung",names(sample_data))]
+names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+sample_data_Q <- na.omit(sample_data_Q)
+names(sample_data_Q) <- c("guess","not_reported","report_at_higher_taxa_level",
+                          "ask_another_person","use_an_identification guide")
+fit <-  prcomp(sample_data_Q, scale = TRUE)
+q3 <- ggbiplot(fit, obs.scale = 1, var.scale = 1)+
+  theme_classic()+
+  ggtitle("How do people deal with species ID uncertainity?")
 
-## PCA 
+#q4
+sample_data_Q <- sample_data[,grepl("wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten",names(sample_data))]
+names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+sample_data_Q <- na.omit(sample_data_Q)
+names(sample_data_Q) <- c("protected_areas","forest","wetland/water_bodies","meadows",
+                          "agricultural_land","green_urban","non-green_urban","remote_areas")
+fit <-  prcomp(sample_data_Q, scale = TRUE)
+q4 <- ggbiplot(fit, obs.scale = 1, var.scale = 1)+
+  theme_classic()+
+  ggtitle("What places do people visit?")
 
-fit <- princomp(sample_data, cor=TRUE)
-summary(fit) # print variance accounted for
-loadings(fit) # pc loadings
-plot(fit,type="lines") # scree plot
-fit$scores # the principal components
-biplot(fit)#most interesting plot!
+cowplot::plot_grid(q1,q2,q3,q4)
 
+}
 
-# using ggbiplot
-fit <-  prcomp(sample_data, scale = TRUE)
-ggbiplot(fit, obs.scale = 1, var.scale = 1)+
-  theme_classic()#can be built up further 
+### apply function ###
 
-#@DIANA - I will add the rest of the taxa and then use ggbiplot to make groups 
+doTaxaPCA(birdDF)
 
