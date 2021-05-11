@@ -153,7 +153,7 @@ q2 <- ggbiplot(fit, obs.scale = 1,
                var.axes = T)+
       theme_pca+
       ggtitle("What triggers the reporting of an incidental observation?")+
-      coord_equal(ratio = 0.7)
+      coord_equal(ratio = 0.5)
 
 #q3
 sample_data_Q <- sample_data[,grepl("wenn_Sie_sich_bei_der_Bestimmung",names(sample_data))]
@@ -198,4 +198,4 @@ d <- doTaxaPCA(frogsDF)
 
 ### make a panel plot (4*4)
 pca_panel <- cowplot::plot_grid(a,b,c,d,labels = "auto", nrow = 4, ncol = 4)
-ggsave(pca_panel, filename = "pca_panel.png", width = 30, height = 15, units = "in")
+#ggsave(pca_panel, filename = "pca_panel.png", width = 30, height = 15, units = "in")
