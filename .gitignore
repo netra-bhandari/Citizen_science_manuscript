@@ -1,8 +1,6 @@
 # data folder
 data/
 
-#symbols folder
-symbols/
 
 # History files
 .Rhistory
