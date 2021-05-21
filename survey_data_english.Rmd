@@ -10,9 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r message:=FALSE, warning=FALSE, include=FALSE}
-setwd("F:/leipzig/CS spatial pattern/survey_data/Survey_data/figures in english")
+setwd("D:/github/Citizen_science_manuscript")
 #path to save figures
-path <- "F:/leipzig/CS spatial pattern/survey_data/Survey_data/figures in english"
+path <- "D:/github/Citizen_science_manuscript"
 
 #load the following libraries
 
@@ -44,6 +44,13 @@ library(devtools)
 #install_github("timelyportfolio/d3treeR")
 library(treemap)
 library(d3treeR)
+library(ggalluvial)
+library(ggfittext)
+#devtools::install_github("davidsjoberg/ggsankey")
+library(ggsankey)
+library(extrafont)
+library(ggtext)
+
 ```
 
 
@@ -71,8 +78,11 @@ colnames(survey_data) <- gsub("Vogel","Vögel", colnames(survey_data))
 
 #n = 1645
 #people who completed the survey
-completed <- survey_data %>% filter(survey_data$Letzte_Seit == 13)
+completed <-  survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
 
+
+#use completed variable as the new survey_data
+survey_data <- completed
 ```
 
 
@@ -377,11 +387,11 @@ groups_others$rename <- ifelse(grepl("Insekten",groups_others$Group, ignore.case
                                            
 groups_others <- data.frame(table(groups_others$rename))                             
 
-#write.csv(groups_others,"groups_others.csv")#change in deepl to english names
+#write.csv(groups_others,"data/groups_others.csv")#change in deepl to english names
 
 english_names <- read.csv("data/groups_others.csv") #use from dropbox
 
-groups_others$eng_group <- english_names$Group.1
+groups_others$eng_group <- english_names$Var1.1
 
 colnames(groups_others) <- c("de_group","Frequency","en_group")
 
@@ -445,11 +455,11 @@ prior_data$subgroup <- gsub("Vogel", "Vögel", prior_data$subgroup)
 prior_data$subgroup <- gsub("Salamander", "Salamandridae", prior_data$subgroup)
 prior_data$subgroup <- gsub("Salamandridaeidae", "Salamandridae", prior_data$subgroup)
 
-#write.csv( prior_data,"prior_de.csv")
+#write.csv( prior_data,"data/prior_de.csv")
 prior_data <- read.csv("data/prior_de.csv") #this contains translated columns (check dropbox)
 
 #create tree map by transforming variables into fators==============================================
-prior_data <- transform(prior_data, data.available = factor(!is.na(subgroup)), x = 1) 
+prior_data <- transform(prior_data, data.available = factor(!is.na(subgroup_eng)), x = 1) 
 
 #wrap the long labels
 prior_data$prior_data <- swr(prior_data$prior_data_eng)
@@ -490,7 +500,7 @@ inter
 
 library(htmlwidgets)
 
-saveWidget(inter, file=paste0( getwd(), "/interactiveTreemap.html"),selfcontained=TRUE,
+saveWidget(inter, file="D:/github/Citizen_science_manuscript/data/figures/interactiveTreemap.html",selfcontained=TRUE,
            knitrOptions=list())
 
 ```
@@ -609,7 +619,7 @@ all_questions$species_group <- str_replace_all(all_questions$species_group,
 
 ##############################################################
 ## separate out all the questions using string detect feature of the dplyr package
-#write.csv(all_questions, "all_questions.csv")
+#write.csv(all_questions, "data/all_questions.csv")
 
 ```
 
@@ -662,14 +672,6 @@ ques1_1 <- ques1_1 %>% mutate(prop_ja = Ja/total,
 #assign the title
 title <- c("Which platform or platforms do you \nmainly use to submit your bee observations")
 
-library(ggalluvial)
-library(ggfittext)
-devtools::install_github("davidsjoberg/ggsankey")
-library(ggsankey)
-library(extrafont)
-library(ggtext)
-library(cowplot)
-library(ggfx)
 
 ques1$Response <- str_replace_all(ques1$Response, c("Ja" = "Yes", "Nein" = "No"))
 ques1$platform <- str_replace_all(ques1$platform, c("Ich benutze keine Plattform" = "I don't use a platform"))
@@ -1805,7 +1807,7 @@ member$label <- paste0(member$Var1, "\n","(", member$Freq, ")")
 
 ```{r message=FALSE, warning=FALSE, include=FALSE,results=FALSE}
 #load the German boundary
-DEU <- readRDS("gadm36_DEU_1_sp.rds")
+DEU <- readRDS("data/gadm36_DEU_1_sp.rds")
 
 ```
 
@@ -1815,7 +1817,7 @@ library(sf)
 
 #load the shapefile for postal codes
 
-postcode_shp <- st_read("postalCodesGermany1st2letters.shp")
+postcode_shp <- st_read("data/postalCodesGermany1st2letters.shp")
 
 ```
 
