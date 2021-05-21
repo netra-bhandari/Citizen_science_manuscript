@@ -129,8 +129,8 @@ sample_data_Q <- sample_data[,grepl("gegangen_sind__wie_sind_Sie_bei_der_Sammlun
 #removed first part of the question to make it generic for all taxa
 names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
 sample_data_Q <- na.omit(sample_data_Q)
-names(sample_data_Q) <- c("complete_checklist","all_species","interesting_species","common_species",
-                          "rare_species")
+names(sample_data_Q) <- c("complete checklist","all species","interesting species","common species",
+                          "rare species")
 fit <-  prcomp(sample_data_Q, scale = TRUE)
 q1 <- ggbiplot(fit, obs.scale = 1,
                var.scale = 1,
@@ -143,24 +143,22 @@ q1 <- ggbiplot(fit, obs.scale = 1,
 sample_data_Q <- sample_data[,grepl("Was_veranlasst_Sie_dazu",names(sample_data))]
 names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][3])
 sample_data_Q <- na.omit(sample_data_Q)
-names(sample_data_Q) <- c("rare_species","many_species_at_same_time", "unexpected_species",
-                          "first_time of_year","unknown_species","many_indivdiduals_at_the_same_time",
-                          "interesing_species")
+names(sample_data_Q) <- c("rare species","many species at same time", "unexpected species",
+                          "first time of year","unknown species","many indivdiduals at the same time",
+                          "interesing species")
 fit <-  prcomp(sample_data_Q, scale = TRUE)
 
 q2 <- ggbiplot(fit, obs.scale = 1,
                var.scale = 1,
                var.axes = T)+
       theme_pca+
-      ggtitle("What triggers the reporting of an incidental observation?")+
-      coord_equal(ratio = 0.5)
-
+      ggtitle("What triggers the reporting of an incidental observation?")
 #q3
 sample_data_Q <- sample_data[,grepl("wenn_Sie_sich_bei_der_Bestimmung",names(sample_data))]
 names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
 sample_data_Q <- na.omit(sample_data_Q)
-names(sample_data_Q) <- c("guess","not_reported","report_at_higher_taxa_level",
-                          "ask_another_person","use_an_identification guide")
+names(sample_data_Q) <- c("guess","not reported","report at higher taxa level",
+                          "ask another person","use an identification guide")
 
 fit <-  prcomp(sample_data_Q, scale = TRUE)
 q3 <- ggbiplot(fit, obs.scale = 1, 
@@ -173,16 +171,15 @@ q3 <- ggbiplot(fit, obs.scale = 1,
 sample_data_Q <- sample_data[,grepl("wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten",names(sample_data))]
 names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
 sample_data_Q <- na.omit(sample_data_Q)
-names(sample_data_Q) <- c("protected_areas","forest","wetland/water_bodies","meadows",
-                          "agricultural_land","green_urban","non-green_urban","remote_areas")
+names(sample_data_Q) <- c("protected areas","forest","wetland/water bodies","meadows",
+                          "agricultural land","green urban","non-green urban","remote areas")
 
 fit <-  prcomp(sample_data_Q, scale = TRUE)
 q4 <- ggbiplot(fit, obs.scale = 1,
                var.scale = 1,
                var.axes = T)+
       theme_pca+
-      ggtitle("What places do people visit?")+
-      coord_equal(ratio = 0.5)
+      ggtitle("What places do people visit?")
       
 
 grid.arrange(q1,q2,q3,q4)
@@ -198,4 +195,4 @@ d <- doTaxaPCA(frogsDF)
 
 ### make a panel plot (4*4)
 pca_panel <- cowplot::plot_grid(a,b,c,d,labels = "auto", nrow = 4, ncol = 4)
-#ggsave(pca_panel, filename = "pca_panel.png", width = 30, height = 15, units = "in")
+ggsave(a, filename = "a.png", width = 30, height = 15, units = "in")
