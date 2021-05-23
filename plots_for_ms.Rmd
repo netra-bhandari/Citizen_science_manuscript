@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r}
-setwd("./plots")
+setwd("D:/github/Citizen_science_manuscript/plots")
 library(cowplot)
 library(patchwork)
 library(gridExtra)
@@ -37,7 +37,7 @@ panel_a<- grid.arrange(panel_a,map+ggtitle("(c)") + ylab("") + xlab("") +
             plot.title.position = "plot",
             plot.title = element_text(size = 30)))
 
-ggsave(panel_a, file = "panel1a.png", width = 28, height = 20, units = "in") 
+ggsave(panel_a, file = "plots/panel1a.png", width = 28, height = 20, units = "in") 
 
 (panel_b <- grid.arrange(
       experience_plot + ggtitle("(a)")+
@@ -89,7 +89,7 @@ ggsave(panel3, file = "plots/fig3.png", width = 35, height = 14, units = "in")
 ```{r}
 #fig 4 types of survey
 
-survey_method <- ques3_plot_2
+survey_method <- ques3_plot
 ggsave(survey_method, file = "plots/fig4.png", width = 13, height = 8, units = "in")
 
 ```
@@ -132,6 +132,7 @@ ggsave(habitat_preference, file = "plots/fig7.png", width = 41, height = 19, uni
 ```
 
 ```{r}
+#fig 8 temporal dependence
 
 temporal_dependence <- lik2
 ggsave(temporal_dependence, file = "plots/fig8.png", width = 35, height = 16, units = "in") 
@@ -167,7 +168,7 @@ treemap # this was saved using export option
 ```{r}
 ## supplementary fig 3
 covid_plot <- covid
-ggsave(covid, filename = "plots/fig3_supp.png",width = 10, height =9, units = "in")
+ggsave(covid, filename = "plots/fig3_supp.png",width = 10, height =10, units = "in")
 ```
 
 ```{r}
