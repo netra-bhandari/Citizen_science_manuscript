@@ -78,7 +78,7 @@ colnames(survey_data) <- gsub("Vogel","Vögel", colnames(survey_data))
 
 #n = 1645
 #people who completed the survey
-completed <-  survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
+completed <-  survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13) #900
 
 
 #use completed variable as the new survey_data
@@ -98,6 +98,8 @@ experience <- data.frame(survey_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfas
 colnames(experience) <- "years_of_experience"
 
 experience <- drop_na(experience)
+
+median(experience$years_of_experience) #11
 
 (experience_plot <- ggplot(experience, aes(x = years_of_experience)) +                
                           geom_histogram(binwidth = 3, colour = "black", fill = "#CD8500") +    
@@ -223,7 +225,7 @@ colnames(imp_obs) = c("Improve knowledge of species", "Contribute to scientific 
                       "Meet other people", "Have fun exploring/finding")
 
 (lik_imp_obs <- plot(likert(imp_obs), center=2, plot.percents=F, plot.percent.low=T,
-                    plot.percent.high=T,legend.position = "right",text.size=14, ordered=FALSE,
+                    plot.percent.high=T,legend.position = "right",text.size=14, ordered=TRUE,
                     colors = c("#a6611a","#dfc27d","#f5f5f5","#80cdc1","#018571"))+
               theme(strip.text=element_text(size=50),
                     axis.text.y = element_text(size = 50, color = "black"),
@@ -327,10 +329,12 @@ new_groups <- new_groups %>%
               tally() %>%  # counting the number of responses
               mutate(perc = n / sum(n) * 100)
 
-
+#reordering based on previous graph 
+new_groups$group <- factor(new_groups$group, levels = c("Birds","Plants","Others","Amphibians/\nReptiles",
+                                                        "Butterflies","Beetles","Dragonflies","Bees"))
 
                  
-(taxa_2 <- ggplot(new_groups, aes( y= perc, x= sort(group), 
+(taxa_2 <- ggplot(new_groups, aes( y= perc, x= group, 
                                           fill= factor(whether_specialised,levels = c(
                                             "Yes, I collect data on a \nspecific subgroup as a priority",
                                             "I don't know",
@@ -738,8 +742,7 @@ ques3_sel_hi_lo$response <-   str_replace_all(ques3_sel_hi_lo$response, c(c("all
 ques3_sel_hi_lo$response <- factor(ques3_sel_hi_lo$response, levels = c("all", "most", "some", "few", "none"))
 
 ques3_sel_hi_lo$Question <- str_replace_all(ques3_sel_hi_lo$Question, 
-                                            c(" das Resultat einer aktiven Suche .Sie sind zum Beispiel an einen bestimmten Ort 
-                                              gefahren. um gezielt nach Arten zu suchen. ." = "the result of an active search (for 
+                                            c("das Resultat einer aktiven Suche .Sie sind zum Beispiel an einen bestimmten Ort gefahren. um gezielt nach Arten zu suchen. ." = "the result of an active search (for 
                                               example, you drove to a specific location to specifically look for species)",
                                               " oder aus aufgestellten Fallen ."  = "or from traps set up",
                                               " oder zufällige Beobachtungen .ohne aktive Suche.." = 
@@ -841,7 +844,9 @@ ques4a$species_group <-   str_replace_all(ques4a$species_group,
 
 #plot a chart=====================================================================
 
-ques4a$species_group <- as.factor(ques4a$species_group)
+ques4a$species_group <- factor(ques4a$species_group, levels = c("Birds","Plants","Amphibians/Reptiles",
+                                                                "Butterflies","Beetles","Dragonflies","Bees"))
+
 
 (ques4a_plot <- ggplot(ques4a, aes( x= species_group,fill = levels, na.rm = TRUE)) + 
                 geom_bar() +
@@ -1102,7 +1107,7 @@ ques6 <- ques6 %>% drop_na()
 ques6 <- ques6[,-1]
 #plot chart=====================================================================
 
-ques6$species_group <- factor(ques6$species_group)
+ques6$species_group <- factor(ques6$species_group, levels = c("Amphibians/Reptiles","Butterflies","Birds","Beetles"))
 
 
 (ques6_plot <- ggplot(ques6, aes(fill=levels, y= n, x=species_group)) + 
@@ -1304,8 +1309,7 @@ ques9$Question <- trimws(ques9$Question, which = c("right"), whitespace = "[ \t\
 ques9$Question <- str_replace_all(ques9$Question, 
                                   c("Ich vermute um welche Art es sich handelt" = "I suspect which species it is",                                                        "Ich melde die Art nicht"= 
                                     "I do not report the species",
-                                    "Ich melde die Beobachtung auf der taxonomischen Ebene die ich sicher identifizieren kann z B 
-                                      Gattung oder Familie" = 
+                                    "Ich melde die Beobachtung auf der taxonomischen Ebene die ich sicher identifizieren kann z B Gattung oder Familie" = 
                                     "I report the observation at the taxonomic level I can confidently identify e.g. genus or family",
                                     "Ich bitte eine andere Person meine Bestimmung zu überprüfen" =
                                     "I ask another person to check my identification",                                                
@@ -1349,7 +1353,7 @@ library(stringr)
 ques9_hi_lo$response <- factor(ques9_hi_lo$response, levels= levels)
 
 (ques9_plot_new <- ggplot(ques9_hi_lo, aes(fill= response, y= perc, x=Question)) + 
-                    geom_bar( position="stack", stat="identity", width=0.5, alpha = 0.6) +
+                    geom_bar( position="stack", stat="identity", width=0.5) +
                     scale_fill_brewer(palette = "BrBG", direction =-1) +
                     coord_flip()+
                     theme_classic() +
@@ -1432,8 +1436,9 @@ covid_affect$Var1 <- swr(covid_affect$Var1)
           arrange(Freq) %>%    # First sort by val. This sort the dataframe but NOT the factor levels
           mutate(name=factor(Var1, levels= Var1)) %>%   # This trick update the factor levels
           ggplot( aes(x=fct_reorder(Var1,-Freq), y= Freq)) +
-          geom_segment( aes(xend= Var1, yend=0)) +
+          geom_segment( aes(xend=Var1, yend=0)) +
           geom_point( size= 6, color="coral3", show.legend = FALSE) +
+          scale_y_continuous(limit = c(0, 700))+
           coord_flip() +
           theme_classic() +
           xlab("Response")+
@@ -1490,7 +1495,7 @@ names(areas) = c("Protected areas", "Forest", "Wetlands and water bodies", "Mead
 (lik1 <- plot(likert(areas), center=2, plot.percents=F,
               plot.percent.low=T, plot.percent.high=T,
               legend.position = "right",text.size=15,
-              ordered=FALSE, colors = c("#8c510a","#d8b365","#f6e8c3","#c7eae5","#5ab4ac","#01665e"))+
+              ordered=T, colors = c("#8c510a","#d8b365","#f6e8c3","#c7eae5","#5ab4ac","#01665e"))+
               theme(strip.text=element_text(size=50),
                     axis.text.y = element_text(size = 50, color = "black"),
                     axis.text.x = element_text(size = 50, color = "black"), 
@@ -1752,16 +1757,17 @@ skills$label <- paste0(skills$Freq)
                 geom_rect(color = "black") +
                 coord_polar(theta="y") + 
                 xlim(c(2, 4))+
-                scale_fill_brewer(palette= "BuPu", direction =1)+
-                geom_label( x=3.5, aes(y=labelPosition, label=label), size=20, show_guide  = F)+ 
-                theme_void()+
+                scale_fill_brewer(palette=4, direction =-1)+
+                geom_label( x= 3.5, aes(y=labelPosition, label=label),size= 20, show_guide  = F)+
                 labs(fill = "Skills acquired from")+
                 theme_void()+
-                theme(panel.border = element_rect(colour = "black", fill=NA, size=0.8),
-                      legend.position="right", 
-                      legend.title = element_text(size = 40),
-                      legend.text = element_text(size = 40),
-                      legend.box="vertical", legend.text.align = 0))
+                theme(legend.position="right", 
+                          legend.title = element_text(size = 30),
+                          legend.text = element_text(size = 30),
+                          legend.box="vertical",
+                          legend.text.align = 0,
+                          panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+               
 
 ```
 
