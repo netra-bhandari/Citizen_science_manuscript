@@ -8,10 +8,15 @@ library(tidyverse)
 library(stringr)
 library(gridExtra)
 library(ggrepel)
+#install.packages(c("FactoMineR", "factoextra"))
+library("FactoMineR")
+library("factoextra")
+library(ggpubr)
+
 
 ### load dataset ###
 
-survey_data <- read.csv("results-survey796935.csv",encoding = "UTF-8")
+survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
 
 #the following line Diana needed to do so that Netras script worked:
 names(survey_data) <- sapply(names(survey_data), function(x)gsub("\\.","_",x))
@@ -75,6 +80,7 @@ pca_data <- as.data.frame(lapply(pca_data, factor))
 pca_data <- ordinal_fn(pca_data)
 sample_data <- mutate_all(pca_data, function(x) as.numeric(as.character(x)))
 
+
 return(sample_data)
 
 }
@@ -123,67 +129,109 @@ theme_pca <- theme_classic()+
 ### function for pca per question ####
 
 doTaxaPCA <- function(sample_data){
-
-#q1
-sample_data_Q <- sample_data[,grepl("gegangen_sind__wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
-#removed first part of the question to make it generic for all taxa
-names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
-sample_data_Q <- na.omit(sample_data_Q)
-names(sample_data_Q) <- c("complete checklist","all species","interesting species","common species",
-                          "rare species")
-fit <-  prcomp(sample_data_Q, scale = TRUE)
-q1 <- ggbiplot(fit, obs.scale = 1,
-               var.scale = 1,
-               var.axes = T)+
-      theme_pca+
-      ggtitle("Which species are reported during an active search?")+ #changed reporting to reported
-      coord_equal(ratio = 0.5)# we use this to make plots wider
-      
-#q2
-sample_data_Q <- sample_data[,grepl("Was_veranlasst_Sie_dazu",names(sample_data))]
-names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][3])
-sample_data_Q <- na.omit(sample_data_Q)
-names(sample_data_Q) <- c("rare species","many species at same time", "unexpected species",
-                          "first time of year","unknown species","many indivdiduals at the same time",
-                          "interesing species")
-fit <-  prcomp(sample_data_Q, scale = TRUE)
-
-q2 <- ggbiplot(fit, obs.scale = 1,
-               var.scale = 1,
-               var.axes = T)+
-      theme_pca+
-      ggtitle("What triggers the reporting of an incidental observation?")
-#q3
-sample_data_Q <- sample_data[,grepl("wenn_Sie_sich_bei_der_Bestimmung",names(sample_data))]
-names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
-sample_data_Q <- na.omit(sample_data_Q)
-names(sample_data_Q) <- c("guess","not reported","report at higher taxa level",
-                          "ask another person","use an identification guide")
-
-fit <-  prcomp(sample_data_Q, scale = TRUE)
-q3 <- ggbiplot(fit, obs.scale = 1, 
-               var.scale = 1,
-               var.axes = T)+
-      theme_pca+
-      ggtitle("How do people deal with species identification uncertainity?") #changed ID to identification
-      
-#q4
-sample_data_Q <- sample_data[,grepl("wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten",names(sample_data))]
-names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
-sample_data_Q <- na.omit(sample_data_Q)
-names(sample_data_Q) <- c("protected areas","forest","wetland/water bodies","meadows",
-                          "agricultural land","green urban","non-green urban","remote areas")
-
-fit <-  prcomp(sample_data_Q, scale = TRUE)
-q4 <- ggbiplot(fit, obs.scale = 1,
-               var.scale = 1,
-               var.axes = T)+
-      theme_pca+
-      ggtitle("What places do people visit?")
-      
-
-grid.arrange(q1,q2,q3,q4)
-
+  
+  #q1
+  sample_data_Q <- sample_data[,grepl("gegangen_sind__wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
+  #removed first part of the question to make it generic for all taxa
+  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+  sample_data_Q <- na.omit(sample_data_Q)
+  names(sample_data_Q) <- c("complete checklist","all species","interesting species","common species",
+                            "rare species")
+  fit <-  prcomp(sample_data_Q, scale = TRUE)
+  q1 <- fviz_pca_biplot(fit, 
+                        # Fill individuals by groups
+                        geom.ind = "point",
+                        pointshape = 21,
+                        pointsize = 0.8,
+                        fill.ind = "black",
+                        col.ind = "black",
+                        col.var = "#225ea8",
+                        repel = TRUE,
+                        labelsize = 5,
+                        arrowsize = 0.1,
+                        title = "Which species are reported during an active search?")
+  q1 <- ggpubr::ggpar(q1,
+                      xlab = "PC1", ylab = "PC2",
+                      ggtheme = theme_pca
+  )
+  
+  #q2
+  sample_data_Q <- sample_data[,grepl("Was_veranlasst_Sie_dazu",names(sample_data))]
+  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][3])
+  sample_data_Q <- na.omit(sample_data_Q)
+  names(sample_data_Q) <- c("rare species","many species at same time", "unexpected species",
+                            "first time of year","unknown species","many indivdiduals at the same time",
+                            "interesing species")
+  fit <-  prcomp(sample_data_Q, scale = TRUE)
+  
+  q2 <- fviz_pca_biplot(fit, 
+                        # Fill individuals by groups
+                        geom.ind = "point",
+                        pointshape = 21,
+                        pointsize = 0.8,
+                        fill.ind = "black",
+                        col.ind = "black",
+                        col.var = "#225ea8",
+                        repel = TRUE,
+                        labelsize = 5,
+                        arrowsize = 0.1,
+                        title = "What triggers the reporting of an incidental observation?")
+  q2 <- ggpubr::ggpar(q2,
+                      xlab = "PC1", ylab = "PC2",
+                      ggtheme = theme_pca
+  )
+  #q3
+  sample_data_Q <- sample_data[,grepl("wenn_Sie_sich_bei_der_Bestimmung",names(sample_data))]
+  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+  sample_data_Q <- na.omit(sample_data_Q)
+  names(sample_data_Q) <- c("guess","not reported","report at higher taxa level",
+                            "ask another person","use an identification guide")
+  
+  fit <-  prcomp(sample_data_Q, scale = TRUE)
+  q3 <- fviz_pca_biplot(fit, 
+                        # Fill individuals by groups
+                        geom.ind = "point",
+                        pointsize = 0.8,
+                        fill.ind = "black",
+                        col.ind = "black",
+                        col.var = "#225ea8",
+                        repel = TRUE,
+                        labelsize = 5,
+                        arrowsize = 0.1,
+                        title = "How do people deal with species identification uncertainity?")
+  
+  q3 <- ggpubr::ggpar(q3,
+                      xlab = "PC1", ylab = "PC2",
+                      ggtheme = theme_pca
+  )
+  #q4
+  sample_data_Q <- sample_data[,grepl("wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten",names(sample_data))]
+  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+  sample_data_Q <- na.omit(sample_data_Q)
+  names(sample_data_Q) <- c("protected areas","forest","wetland/water bodies","meadows",
+                            "agricultural land","green urban","non-green urban","remote areas")
+  
+  fit <-  prcomp(sample_data_Q, scale = TRUE)
+  q4 <- fviz_pca_biplot(fit, 
+                        # Fill individuals by groups
+                        geom.ind = "point",
+                        pointshape = 21,
+                        pointsize = 0.8,
+                        fill.ind = "black",
+                        col.ind = "black",
+                        col.var = "#225ea8",
+                        repel = TRUE,
+                        labelsize = 5,
+                        arrowsize = 0.1,
+                        title = "What places do people visit?")
+  q4 <- ggpubr::ggpar(q4,
+                      xlab = "PC1", ylab = "PC2",
+                      ggtheme = theme_pca
+                      
+  )
+  
+  grid.arrange(q1,q2,q3,q4)
+  
 }
 
 ### apply function ###
@@ -194,5 +242,14 @@ c <- doTaxaPCA(plantDF)
 d <- doTaxaPCA(frogsDF)
 
 ### make a panel plot (4*4)
-pca_panel <- cowplot::plot_grid(a,b,c,d,labels = "auto", nrow = 4, ncol = 4)
-ggsave(a, filename = "a.png", width = 30, height = 15, units = "in")
+
+#@DIANA how should I arrange the plots? 
+#below is just all plots in panel 
+#we can also make use of different colors for 4 taxa groups 
+#or we make 4 separate plots 
+
+#plist <- list(a,b,c,d)
+
+#pca_panel <- cowplot::plot_grid(plotlist = plist, ncol = 2)
+#ggsave("pca_panel.png", filename = pca_panel)
+
