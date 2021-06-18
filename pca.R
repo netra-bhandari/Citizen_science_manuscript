@@ -120,7 +120,7 @@ insectDF <- rbind(butterflyDF,dragonflyDF,beetleDF,beeDF)
 frogsDF <- getTaxaData("Amphibien")
 
 #combine all together
-allDF <- rbind(frogDF,insectDF,butterflyDF,birdSD)
+allDF <- rbind(frogDF,insectDF,butterflyDF,birdDF)
 
 ## make a common theme for plots
 theme_pca <- theme_classic()+
