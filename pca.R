@@ -12,6 +12,7 @@ library(ggrepel)
 library("FactoMineR")
 library("factoextra")
 library(ggpubr)
+library(ggthemes)
 
 
 ### load dataset ###
@@ -261,32 +262,58 @@ d <- doTaxaPCA(frogsDF)
 
 
 
-#motivations PCA
+### motivations PCA ####
+
 motivationsDF <- pca_data[,10:18]
 motivationsDF <- ordinal_fn(motivationsDF)
 motivationsDF <- mutate_all(motivationsDF, function(x) as.numeric(as.character(x)))
 names(motivationsDF) <- sapply(names(motivationsDF),function(x)strsplit(x,"_____")[[1]][2])
+names(motivationsDF) <- c("improve species knowledge",
+                          "contribute to science",
+                          "support conservation",
+                          "spend time outdoors",
+                          "physical activity",
+                          "protect a specific place",
+                          "gain local knowledge",
+                          "meet other people",
+                          "have fun exploring")
 
+#fit PCA
 fit <-  prcomp(motivationsDF, scale = TRUE)
+
+fviz_eig(fit)
+
 biplot(fit)
 
-scores(fit)[,1:2]
+fviz_pca_biplot(fit, 
+                col.var = "contrib",
+                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                repel = TRUE,
+                title = "Motivations to collect species data")
 
 
+#rotated PCA - maximizes the loading of each axis onto x and y
+#https://stats.stackexchange.com/questions/59213/how-to-compute-varimax-rotated-principal-components-in-r
 
-q1 <- fviz_pca_biplot(fit, 
-                      # Fill individuals by groups
-                      geom.ind = "point",
-                      pointshape = 21,
-                      pointsize = 0.8,
-                      fill.ind = "black",
-                      col.ind = "black",
-                      col.var = "#225ea8",
-                      repel = TRUE,
-                      labelsize = 5,
-                      arrowsize = 0.1,
-                      title = "Which species are reported during an active search?")
-q1 <- ggpubr::ggpar(q1,
-                    xlab = "PC1", ylab = "PC2",
-                    ggtheme = theme_pca
-)
+library(psych)
+pca_rotated <- principal(motivationsDF, rotate="varimax", nfactors=2, scores=TRUE)
+biplot(pca_rotated)
+loadings <- as.data.frame(unclass(pca_rotated$loadings))
+
+#using different package:
+#pca_rotated <- princomp(motivationsDF)
+#biplot(pca_rotated)
+#loadings<-as.data.frame(unclass(loadings(pca_rotated)))
+
+loadings$Names<-rownames(loadings)
+
+#use ggplot
+ggplot()+
+  geom_segment(data=loadings, aes(x=0, y=0, xend=RC1, yend=RC2), 
+               arrow=arrow(length=unit(0.2,"cm")))+
+  geom_text(data=loadings, aes(x=RC1, y=RC2, label=Names), 
+            alpha=0.6, size=4)+
+  scale_x_continuous("Principal Component 1 (25%)", limits=c(-0.25,0.9))+
+  scale_y_continuous("Principal Component 2 (21%)", limits=c(-0.1,0.9))+
+  theme_few()
+
