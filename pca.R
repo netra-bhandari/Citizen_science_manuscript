@@ -114,12 +114,13 @@ colnames(beetleDF) = colnames(butterflyDF)
 colnames(dragonflyDF) = colnames(butterflyDF)
 colnames(beeDF) = colnames(butterflyDF)
 
-insectDF <- rbind(butterflyDF,dragonflyDF,beetleDF,beeDF)# you need to fix the headings somehow....
+insectDF <- rbind(butterflyDF,dragonflyDF,beetleDF,beeDF)
 
 #get amphibians
 frogsDF <- getTaxaData("Amphibien")
 
-
+#combine all together
+allDF <- rbind(frogDF,insectDF,butterflyDF,birdSD)
 
 ## make a common theme for plots
 theme_pca <- theme_classic()+
