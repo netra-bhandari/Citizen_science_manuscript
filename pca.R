@@ -31,15 +31,20 @@ ordinal_fn <- function(x){
                                         . ==  "manchmal" ~ "3" ,
                                         . ==  "selten" ~ "2",
                                         . ==  "nie" ~ "1",
-                                        . ==  "weiß nicht" ~ "0",
+                                        . ==  "wei? nicht" ~ "0",
+                                        . == "sehr wichtig" ~ "5",
+                                        . == "wichtig" ~ "4",
+                                        . == "mÃ¤ÃŸig wichtig" ~ "3",
+                                        . == "wenig wichtig" ~ "2",
+                                        . == "Ã¼berhaupt nicht wichtig" ~ "1",
                                         . ==   "alle"~ "5",
                                         . ==   "die meisten" ~ "4",
                                         . ==   "einige" ~ "3",
                                         . ==   "wenige" ~ "2",
                                         . ==   "keine" ~ "1",
-                                        . ==  "überhaupt nicht wahrscheinlich" ~ "1",
+                                        . ==  "?berhaupt nicht wahrscheinlich" ~ "1",
                                         . ==  "wenig wahrscheinlich" ~ "2" ,
-                                        . ==  "mäßig wahrscheinlich" ~ "3" ,
+                                        . ==  "m??ig wahrscheinlich" ~ "3" ,
                                         . ==  "ziemlich wahrscheinlich" ~ "4",
                                         . ==  "sehr wahrscheinlich" ~ "5",
                                         . ==  "Ja" ~ "1",
@@ -59,7 +64,7 @@ colnames(pca_data)[1]<- "ID"
 
 getTaxaData <- function(myTaxa){ 
   
-pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_wählen_Sie_EINE_Artengruppe__),]
+pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_w?hlen_Sie_EINE_Artengruppe__),]
 taxa <- data.frame(pca_data[,grepl(paste0(myTaxa,collapse="|"), names(survey_data))])
 
 ### #get other question (without taxa in question) ####
@@ -88,7 +93,7 @@ return(sample_data)
 ### get taxa data frames ####
 
 #get birdDF
-birdDF <- getTaxaData(c("Vogel","Vögel"))
+birdDF <- getTaxaData(c("Vogel","V?gel"))
 
 #get plantsDF
 plantDF <- getTaxaData("Pflanzen")
@@ -96,7 +101,7 @@ plantDF <- getTaxaData("Pflanzen")
 #get insectDF
 butterflyDF <- getTaxaData("Schmetterl") %>% add_column(taxa = "Butterfly")
 dragonflyDF <- getTaxaData("Libellen")%>% add_column(taxa = "Dragonfly")
-beetleDF <- getTaxaData(c("Käfer"))%>% add_column(taxa = "Beetle")
+beetleDF <- getTaxaData(c("K?fer"))%>% add_column(taxa = "Beetle")
 beeDF <- getTaxaData("Bienen")%>% add_column(taxa = "Bee")
 
 #renaming taxa names to "insect" to make a common dataframe
@@ -253,3 +258,34 @@ d <- doTaxaPCA(frogsDF)
 #pca_panel <- cowplot::plot_grid(plotlist = plist, ncol = 2)
 #ggsave("pca_panel.png", filename = pca_panel)
 
+
+
+#motivations PCA
+motivationsDF <- pca_data[,10:18]
+motivationsDF <- ordinal_fn(motivationsDF)
+motivationsDF <- mutate_all(motivationsDF, function(x) as.numeric(as.character(x)))
+names(motivationsDF) <- sapply(names(motivationsDF),function(x)strsplit(x,"_____")[[1]][2])
+
+fit <-  prcomp(motivationsDF, scale = TRUE)
+biplot(fit)
+
+scores(fit)[,1:2]
+
+
+
+q1 <- fviz_pca_biplot(fit, 
+                      # Fill individuals by groups
+                      geom.ind = "point",
+                      pointshape = 21,
+                      pointsize = 0.8,
+                      fill.ind = "black",
+                      col.ind = "black",
+                      col.var = "#225ea8",
+                      repel = TRUE,
+                      labelsize = 5,
+                      arrowsize = 0.1,
+                      title = "Which species are reported during an active search?")
+q1 <- ggpubr::ggpar(q1,
+                    xlab = "PC1", ylab = "PC2",
+                    ggtheme = theme_pca
+)
