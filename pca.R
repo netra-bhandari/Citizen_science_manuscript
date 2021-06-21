@@ -278,18 +278,17 @@ names(motivationsDF) <- c("improve species knowledge",
                           "meet other people",
                           "have fun exploring")
 
-#fit PCA
-fit <-  prcomp(motivationsDF, scale = TRUE)
-
-fviz_eig(fit)
-
-biplot(fit)
-
-fviz_pca_biplot(fit, 
-                col.var = "contrib",
-                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-                repel = TRUE,
-                title = "Motivations to collect species data")
+# #fit PCA
+# fit <-  prcomp(motivationsDF, scale = TRUE)
+# 
+# fviz_eig(fit)
+# 
+# biplot(fit)
+# 
+# fviz_pca_biplot(fit, 
+#                 col.var = "contrib",
+#                 gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#                 title = "Motivations to collect species data")
 
 
 #rotated PCA - maximizes the loading of each axis onto x and y
@@ -298,6 +297,7 @@ fviz_pca_biplot(fit,
 library(psych)
 pca_rotated <- principal(motivationsDF, rotate="varimax", nfactors=2, scores=TRUE)
 biplot(pca_rotated)
+summary(pca_rotated)
 loadings <- as.data.frame(unclass(pca_rotated$loadings))
 
 #using different package:
@@ -310,10 +310,17 @@ loadings$Names<-rownames(loadings)
 #use ggplot
 ggplot()+
   geom_segment(data=loadings, aes(x=0, y=0, xend=RC1, yend=RC2), 
-               arrow=arrow(length=unit(0.2,"cm")))+
-  geom_text(data=loadings, aes(x=RC1, y=RC2, label=Names), 
+               arrow=arrow(length=unit(0.2,"cm")),colour="grey")+
+  geom_text_repel(data=loadings, aes(x=RC1, y=RC2, label=Names), 
             alpha=0.6, size=4)+
-  scale_x_continuous("Principal Component 1 (25%)", limits=c(-0.25,0.9))+
-  scale_y_continuous("Principal Component 2 (21%)", limits=c(-0.1,0.9))+
+  scale_x_continuous("Principal Component 1", limits=c(-0.25,0.9))+
+  scale_y_continuous("Principal Component 2", limits=c(-0.1,0.9))+
   theme_few()
+
+
+#save scores and person ID
+motivationsDF$ID <- pca_data$ID
+motivationsDF$scores1 <- pca_rotated$scores[,1]
+motivationsDF$scores2 <- pca_rotated$scores[,2]
+saveRDS(motivationsDF,file="model-outputs/motivationsDF.rds")
 
