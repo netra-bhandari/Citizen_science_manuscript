@@ -1,5 +1,5 @@
 #get pca_data from the pca.R script
-
+source('helper_functions.R', encoding = 'UTF-8')
 #Questions
 # (1) Taxon group differences: we used ordinal regression analysis to compare responses to the same question among participants with different focal taxonomic groups using the ordinal R package or a chi-square test. 
 

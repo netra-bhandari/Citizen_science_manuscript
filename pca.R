@@ -15,6 +15,8 @@ library(ggpubr)
 library(ggthemes)
 
 
+source('helper_functions.R', encoding = 'UTF-8')
+
 ### load dataset ###
 
 survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
