@@ -22,40 +22,6 @@ survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
 #the following line Diana needed to do so that Netras script worked:
 names(survey_data) <- sapply(names(survey_data), function(x)gsub("\\.","_",x))
 
-#### function #####
-
-#replace ordinal scale to a numeric scale
-
-ordinal_fn <- function(x){
-  x <- x %>%  mutate_all(funs(case_when(. == "sehr oft" ~ "5" ,
-                                        . ==  "oft" ~ "4" ,
-                                        . ==  "manchmal" ~ "3" ,
-                                        . ==  "selten" ~ "2",
-                                        . ==  "nie" ~ "1",
-                                        . ==  "wei? nicht" ~ "0",
-                                        . == "sehr wichtig" ~ "5",
-                                        . == "wichtig" ~ "4",
-                                        . == "mäßig wichtig" ~ "3",
-                                        . == "wenig wichtig" ~ "2",
-                                        . == "überhaupt nicht wichtig" ~ "1",
-                                        . ==   "alle"~ "5",
-                                        . ==   "die meisten" ~ "4",
-                                        . ==   "einige" ~ "3",
-                                        . ==   "wenige" ~ "2",
-                                        . ==   "keine" ~ "1",
-                                        . ==  "?berhaupt nicht wahrscheinlich" ~ "1",
-                                        . ==  "wenig wahrscheinlich" ~ "2" ,
-                                        . ==  "m??ig wahrscheinlich" ~ "3" ,
-                                        . ==  "ziemlich wahrscheinlich" ~ "4",
-                                        . ==  "sehr wahrscheinlich" ~ "5",
-                                        . ==  "Ja" ~ "1",
-                                        . ==   "Nein" ~ "0"
-                                        )))
-  
-  return(x)
-  
-}
-
 ### subset to people completing most of the survey ####
 
 pca_data <- survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
