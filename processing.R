@@ -1,17 +1,10 @@
 #script to format the data frame to align taxa-specific questions in the same columns
 
-
-#library(devtools)
-#install_github("vqv/ggbiplot")
-library(ggbiplot)
 library(dplyr)
 library(tidyverse)
 library(stringr)
 library(gridExtra)
 library(ggrepel)
-#install.packages(c("FactoMineR", "factoextra"))
-library("FactoMineR")
-library("factoextra")
 library(ggpubr)
 library(ggthemes)
 
@@ -32,13 +25,30 @@ colnames(pca_data)[1]<- "ID"
 
 getTaxaData <- function(myTaxa){ 
   
-  pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_w?hlen_Sie_EINE_Artengruppe__),]
+  pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_wählen_Sie_EINE_Artengruppe__),]
   taxa <- data.frame(pca_data[,grepl(paste0(myTaxa,collapse="|"), names(survey_data))])
+  
+  #remove the taxa name from the question
+  
   
   ### #get other question (without taxa in question) ####
   
-  otherQuestions <- c("Stellen_Sie_sich_vor__Sie_besuchen_einen_Ort",
-                      "wie_oft_haben_Sie_an_den_folgenden_Orte")
+  otherQuestions <- c("Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung",
+                      "Wie_oft_haben_Sie_im_Frühling_oder_Sommer_2020",
+                      "Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte",
+                      "Bitte_wählen_Sie_EINE_Artengruppe_",
+                      "Erfassen_Sie_vorrangig_Beobachtungsdaten",
+                      "Falls_Ja___Bitte_spezifizieren_Sie",
+                      "War_Ihre_Artenbeobachtung_oder__berichterstattung_im_Frühling_Sommer_2020_aufgrund_der_Corona_Situation",
+                      "Stellen_Sie_sich_vor__Sie_besuchen_einen_Ort",
+                      "wie_oft_haben_Sie_an_den_folgenden_Orte",
+                      "Ich bin",
+                      "Zu_welcher_Altersklasse_gehören_Sie_",
+                      "Nehmen_Sie_an_einem_groß_angelegten_standardisierten_Monitoringsystem_teil",
+                      "Besitzen_Sie_Fachkenntnisse",
+                      "Wo_haben_Sie_die_Fachkenntnisse",
+                      "Sind_Sie_Mitglied_in_einer_Fachgesellschaft",
+                      "Wie_lauten_die_ersten_zwei_Ziffern")
   
   #get columns with these headings
   other_data <- pca_data[,grepl(paste0(otherQuestions,collapse="|"),names(pca_data))]
@@ -47,46 +57,27 @@ getTaxaData <- function(myTaxa){
   
   pca_data <- cbind(taxa,other_data)
   
-  ### clean data for PCA ####
-  
-  pca_data <- as.data.frame(lapply(pca_data, factor)) 
-  pca_data <- ordinal_fn(pca_data)
-  sample_data <- mutate_all(pca_data, function(x) as.numeric(as.character(x)))
-  
-  
-  return(sample_data)
+  return(pca_data)
   
 }
 
 ### get taxa data frames ####
 
-#get birdDF
-birdDF <- getTaxaData(c("Vogel","V?gel"))
-
-#get plantsDF
+birdDF <- getTaxaData(c("Vogel","V?gel","Vögel"))
 plantDF <- getTaxaData("Pflanzen")
-
-#get insectDF
-butterflyDF <- getTaxaData("Schmetterl") %>% add_column(taxa = "Butterfly")
-dragonflyDF <- getTaxaData("Libellen")%>% add_column(taxa = "Dragonfly")
-beetleDF <- getTaxaData(c("K?fer"))%>% add_column(taxa = "Beetle")
-beeDF <- getTaxaData("Bienen")%>% add_column(taxa = "Bee")
-
-#renaming taxa names to "insect" to make a common dataframe
-#then replace the colnames with new names 
-colnames(butterflyDF) <- gsub("Schmetterling", "insect", colnames(butterflyDF))
-colnames(butterflyDF) <- str_replace_all(colnames(butterflyDF),
-                                         c("insecten" = "insect",
-                                           "insects" = "insect"))
-colnames(beetleDF) = colnames(butterflyDF)
-colnames(dragonflyDF) = colnames(butterflyDF)
-colnames(beeDF) = colnames(butterflyDF)
-
-insectDF <- rbind(butterflyDF,dragonflyDF,beetleDF,beeDF)
-
-#get amphibians
+butterflyDF <- getTaxaData("Schmetterl") 
+dragonflyDF <- getTaxaData("Libellen")
+beetleDF <- getTaxaData(c("K?fer","Käfer"))
+beeDF <- getTaxaData("Bienen")
 frogsDF <- getTaxaData("Amphibien")
+
+
+#make all have the same set of headings
+
+#to be done...
 
 #combine all together
 allDF <- rbind(frogDF,insectDF,butterflyDF,birdDF)
+
+#still need to sort the "others" out
 
