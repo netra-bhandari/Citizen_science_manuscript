@@ -1,3 +1,6 @@
+#get pca_data from the pca.R script
+
+#Questions
 # (1) Taxon group differences: we used ordinal regression analysis to compare responses to the same question among participants with different focal taxonomic groups using the ordinal R package or a chi-square test. 
 
 # Model formula: Response ~ TaxonGroup
@@ -33,8 +36,30 @@ lm(score2 ~ Taxon_group, data=df)
 lm(score1 ~ Taxon_group, data=df)
 lm(score2 ~ Taxon_group, data=df)
 
-### example data set for ordinal regression ####
 
+### motivations analysis##############
+
+#read and merge with pca scores for motivations
+motivationsDF <- readRDS("model-outputs/motivationsDF.rds")
+pca_data <- inner_join(pca_data,motivationsDF)
+pca_data$Taxon_group <- pca_data$Bitte_wählen_Sie_EINE_Artengruppe__
+pca_data$Taxon_group[pca_data$Taxon_group %in% c("Bienen","Käfer","Libellen","Schmetterlinge")] <- "Insects"
+
+hist(pca_data$scores1)
+unique(pca_data$Bitte_wählen_Sie_EINE_Artengruppe__)
+pca_data <- subset(pca_data,Taxon_group!="")
+
+#axis 1 - fun/outdoors
+lm1 <- lm(scores1 ~ Taxon_group, data=pca_data)
+summary(lm1)
+anova(lm1)
+
+#axis 2 - science/species
+lm1 <- lm(scores2 ~ Taxon_group, data=pca_data)
+summary(lm1)
+anova(lm1)
+
+### example data set for ordinal regression ####
 #cumulative link mixed models (CLMM) for depression, anxiety and stress (ordinal package)
 library(ordinal)
 
