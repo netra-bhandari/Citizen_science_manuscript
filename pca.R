@@ -21,8 +21,11 @@ source('helper_functions.R', encoding = 'UTF-8')
 
 survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
 
+##trial with cleaned-data (keeping variable name same here so as not to make multiple changes below)
+survey_data <- readRDS("cleaned-data/clean_data.RDS")
+
 #the following line Diana needed to do so that Netras script worked:
-names(survey_data) <- sapply(names(survey_data), function(x)gsub("\\.","_",x))
+#names(survey_data) <- sapply(names(survey_data), function(x)gsub("\\.","_",x))
 
 ### subset to people completing most of the survey ####
 
@@ -33,7 +36,7 @@ colnames(pca_data)[1]<- "ID"
 
 getTaxaData <- function(myTaxa){ 
   
-pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_w?hlen_Sie_EINE_Artengruppe__),]
+pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_wählen_Sie_EINE_Artengruppe__),]
 taxa <- data.frame(pca_data[,grepl(paste0(myTaxa,collapse="|"), names(survey_data))])
 
 ### #get other question (without taxa in question) ####
@@ -62,7 +65,7 @@ return(sample_data)
 ### get taxa data frames ####
 
 #get birdDF
-birdDF <- getTaxaData(c("Vogel","V?gel"))
+birdDF <- getTaxaData(c("Vogel","Vögel"))
 
 #get plantsDF
 plantDF <- getTaxaData("Pflanzen")
@@ -70,7 +73,7 @@ plantDF <- getTaxaData("Pflanzen")
 #get insectDF
 butterflyDF <- getTaxaData("Schmetterl") %>% add_column(taxa = "Butterfly")
 dragonflyDF <- getTaxaData("Libellen")%>% add_column(taxa = "Dragonfly")
-beetleDF <- getTaxaData(c("K?fer"))%>% add_column(taxa = "Beetle")
+beetleDF <- getTaxaData(c("Käfer"))%>% add_column(taxa = "Beetle")
 beeDF <- getTaxaData("Bienen")%>% add_column(taxa = "Bee")
 
 #renaming taxa names to "insect" to make a common dataframe
