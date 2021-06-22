@@ -23,7 +23,7 @@ source('helper_functions.R', encoding = 'UTF-8')
 
 ##trial with cleaned-data (keeping variable name same here so as not to make multiple changes below)
 survey_data <- readRDS("cleaned-data/clean_data.RDS")
-survey_data$Taxa <- survey_data$Bitte.wählen.Sie.EINE.Artengruppe..
+survey_data$Taxa <- survey_data$Bitte.wahlen.Sie.EINE.Artengruppe..
 
 ### get taxa data frames ####
 
@@ -210,38 +210,6 @@ motivationsDF$scores1 <- pca_rotated$scores[,1]
 motivationsDF$scores2 <- pca_rotated$scores[,2]
 saveRDS(motivationsDF,file="model-outputs/motivationsDF.rds")
 
-#or a correlation plot
-library(corrplot)
-corrplot(cor(motivationsDF[,1:9]))
-identifyCorrelations(motivationsDF[,1:9])
-
-#chord plot??
-library(circlize)
-corrMatrix <- cor(motivationsDF[,1:9])
-corrMatrixm <- melt(corrMatrix)
-corrMatrixm <- subset(corrMatrixm,!is.na(value))
-corrMatrixm <- subset(corrMatrixm,value!=1)
-#specific colour of strong correlation links
-corrMatrixm$Colour <- "#FFFFFF00"
-corrMatrixm$Colour[abs(corrMatrixm$value) > 0.5] <- gplots::col2hex("grey70")
-
-#plot chord diagram
-chordDiagram(corrMatrixm,symmetric = FALSE,
-             transparency = 0.5,
-             col = corrMatrixm$Colour,
-             #grid.col=rev(mycols),
-             order= names(motivationsDF),
-             annotationTrack = "grid", preAllocateTracks = 1)
-
-#change label direction
-circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
-  xlim = get.cell.meta.data("xlim")
-  ylim = get.cell.meta.data("ylim")
-  sector.name = get.cell.meta.data("sector.index")
-  circos.text(mean(xlim), ylim[1] + .1, sector.name, cex=0.6,facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
-  circos.axis(h = "top", labels.cex = 0.2, major.tick.length = 0.2, sector.index = sector.name, track.index = 2)
-}, bg.border = NA)
-
 ### active search pca ###
 
 sample_data_Q <- sample_data[,grepl("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
@@ -280,7 +248,6 @@ pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRU
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
-
 
 #### trap PCA ####
 
