@@ -36,3 +36,12 @@ ordinal_fn <- function(x){
 combineTaxa <- function(x){
   x[x %in% c("Bienen","Käfer","Libellen","Schmetterlinge")] <- "Insects"
 }
+
+
+# funtion to  wrap the long questions for a tidy representation in plots
+
+swr = function(string, nwrap=20) {
+  paste(strwrap(string, width=nwrap), collapse="\n")
+}
+
+swr = Vectorize(swr)
