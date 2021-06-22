@@ -40,17 +40,17 @@ insectDF <- subset(survey_data,Taxa %in% c("Libellen","Schmetterlinge","Käfer",
 #get amphibians
 frogsDF <- subset(survey_data,Taxa="Amphibien/Reptilien")
 
+### function for pca per question ####
+
 ## make a common theme for plots
 theme_pca <- theme_classic()+
-             theme(plot.title = element_text(size = 20, color = "black"),
-                   axis.text.x = element_text(size = 10, face = "bold"),
-                   axis.text.y = element_text(size = 10, face = "bold"),
-                   panel.border = element_rect(colour = "black", fill=NA, size=0.8),
-                   axis.title.x = element_text(size = 20, color = "black"),   
-                   axis.title.y = element_text(size = 20, color = "black"))
+  theme(plot.title = element_text(size = 20, color = "black"),
+        axis.text.x = element_text(size = 10, face = "bold"),
+        axis.text.y = element_text(size = 10, face = "bold"),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.8),
+        axis.title.x = element_text(size = 20, color = "black"),   
+        axis.title.y = element_text(size = 20, color = "black"))
 
-
-### function for pca per question ####
 
 doTaxaPCA <- function(sample_data){
   
