@@ -210,7 +210,7 @@ motivationsDF$scores1 <- pca_rotated$scores[,1]
 motivationsDF$scores2 <- pca_rotated$scores[,2]
 saveRDS(motivationsDF,file="model-outputs/motivationsDF.rds")
 
-### active search pca ###
+#### active search pca ####
 
 sample_data_Q <- sample_data[,grepl("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
 #removed first part of the question to make it generic for all taxa
