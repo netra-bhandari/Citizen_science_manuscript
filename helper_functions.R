@@ -67,8 +67,8 @@ plotPCA <- function(pca_rotated){
                  arrow=arrow(length=unit(0.2,"cm")),colour="grey")+
     geom_text_repel(data=loadings, aes(x=RC1, y=RC2, label=Names), 
                     alpha=0.6, size=4)+
-    scale_x_continuous("Principal Component 1", limits=c(-0.25,0.9))+
-    scale_y_continuous("Principal Component 2", limits=c(-0.1,0.9))+
+    scale_x_continuous("Principal Component 1")+
+    scale_y_continuous("Principal Component 2")+
     theme_few()
 }
 
