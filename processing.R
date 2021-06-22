@@ -26,7 +26,7 @@ colnames(survey_data)[1]<- "ID"
 #remove all German characters
 names(survey_data) <- sapply(names(survey_data),function(x)iconv(x, to='ASCII//TRANSLIT'))
 names(survey_data) <- gsub("\\?","ss",names(survey_data))
-names(survey_data) <- gsub("ÃŸ","ss",names(survey_data))
+names(survey_data) <- gsub("ß","ss",names(survey_data))
 
 ### Main taxa-group function ######################################################
 
