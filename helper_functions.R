@@ -45,3 +45,17 @@ swr = function(string, nwrap=20) {
 }
 
 swr = Vectorize(swr)
+
+
+
+# identify correlations above 0.5
+identifyCorrelations <- function(df){
+  
+  corrMatrix <- cor(df)
+  corrMatrix[upper.tri(corrMatrix)] <- NA
+  corrMatrixm <- reshape2::melt(corrMatrix)
+  corrMatrixm <- subset(corrMatrixm,!is.na(value))
+  corrMatrixm <- subset(corrMatrixm,value!=1)
+  subset(corrMatrixm,abs(value)>0.5)
+  
+}
