@@ -22,24 +22,24 @@ source('helper_functions.R', encoding = 'UTF-8')
 ### load dataset ###
 
 ##trial with cleaned-data (keeping variable name same here so as not to make multiple changes below)
-survey_data <- readRDS("cleaned-data/clean_data.RDS")
-survey_data$Taxa <- survey_data$Bitte.wahlen.Sie.EINE.Artengruppe..
+sample_data <- readRDS("cleaned-data/clean_data.RDS")
+sample_data$Taxa <- sample_data$Bitte.wahlen.Sie.EINE.Artengruppe..
 
 ### get taxa data frames ####
 
-unique(survey_data$Taxa)
+unique(sample_data$Taxa)
 
 #get birdDF
-birdDF <- subset(survey_data,Taxa="Vögel")
+birdDF <- subset(sample_data,Taxa="Vögel")
 
 #get plantsDF
-plantDF <- subset(survey_data,Taxa="Pflanzen")
+plantDF <- subset(sample_data,Taxa="Pflanzen")
 
 #get insectDF
-insectDF <- subset(survey_data,Taxa %in% c("Libellen","Schmetterlinge","Käfer","Bienen"))
+insectDF <- subset(sample_data,Taxa %in% c("Libellen","Schmetterlinge","Käfer","Bienen"))
 
 #get amphibians
-frogsDF <- subset(survey_data,Taxa="Amphibien/Reptilien")
+frogsDF <- subset(sample_data,Taxa="Amphibien/Reptilien")
 
 ### taxa pca per question ####
 
