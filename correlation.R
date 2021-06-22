@@ -1,6 +1,8 @@
 #Diana just playing with some visualization options
 
 #get motivationsDF from the pca script
+motivationsDF <- readRDS("model-outputs/motivationsDF.RDS")
+motivationsDF <- motivationsDF[,1:9]
 
 #### correlation plot ####
 
@@ -40,12 +42,12 @@ library("qgraph")
 corMat <- cor_auto(motivationsDF) 
 #The cor_auto function in the qgraph package can be used to automatically detect ordinal variables and compute polychoric and polyserial correlations in combination to Pearson correlations:
 
-Graph_pcor <- qgraph(corMat, graph = "pcor", layout = "spring", nodeNames = names(motivationsDF))
+Graph_pcor <- qgraph::qgraph(corMat, graph = "pcor", layout = "spring", nodeNames = names(motivationsDF))
 
-Graph_pcor <- qgraph(corMat, graph = "pcor", layout = "spring", threshold = "bonferroni",
+Graph_pcor <- qgraph::qgraph(corMat, graph = "pcor", layout = "spring", threshold = "bonferroni",
                      sampleSize = nrow(motivationsDF), alpha = 0.05)
 
-Graph_lasso <- qgraph(corMat, graph = "glasso", layout = "spring", tuning = 0.25,
+Graph_lasso <- qgraph::qgraph(corMat, graph = "glasso", layout = "spring", tuning = 0.25,
                       sampleSize = nrow(motivationsDF), alpha = 0.05)
 #can add a groups argument to colour code by group
 
@@ -64,7 +66,7 @@ tidy_cors <- motivationsDF %>%
 # Convert correlations stronger than some value
 # to an undirected graph object
 graph_cors <- tidy_cors %>% 
-  filter(abs(r) > 0.4) %>% 
+  filter(abs(r) > 0.2) %>% 
   graph_from_data_frame(directed = FALSE)
 
 # Plot
