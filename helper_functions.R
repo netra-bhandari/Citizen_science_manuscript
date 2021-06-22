@@ -46,6 +46,7 @@ swr = function(string, nwrap=20) {
 
 swr = Vectorize(swr)
 
+#functions for pca analysis
 
 format4PCA <- function(df){
   
@@ -56,6 +57,20 @@ format4PCA <- function(df){
   
 }
 
+plotPCA <- function(pca_rotated){
+  
+  loadings <- as.data.frame(unclass(pca_rotated$loadings))
+  loadings$Names<-rownames(loadings)
+
+  ggplot()+
+    geom_segment(data=loadings, aes(x=0, y=0, xend=RC1, yend=RC2), 
+                 arrow=arrow(length=unit(0.2,"cm")),colour="grey")+
+    geom_text_repel(data=loadings, aes(x=RC1, y=RC2, label=Names), 
+                    alpha=0.6, size=4)+
+    scale_x_continuous("Principal Component 1", limits=c(-0.25,0.9))+
+    scale_y_continuous("Principal Component 2", limits=c(-0.1,0.9))+
+    theme_few()
+}
 
 # identify correlations above 0.5
 identifyCorrelations <- function(df){
