@@ -289,3 +289,28 @@ pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRU
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
+
+
+#### experience PCA ####
+
+sample_data_Q <- sample_data[,c("Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_","Wie_oft_haben_Sie_im_Fruhling_oder_Sommer_2020_Artdaten_gesammelt_",
+                                "Nehmen_Sie_an_einem_gross_angelegten_standardisierten_Monitoringsystem_teil_z_B_Tagfalter_Monitoring_Deutschland_",
+                                "Besitzen_Sie_Fachkenntnisse_im_Bereich_des_Biodiversitatsmonitorings_",
+                                "Sind_Sie_Mitglied_in_einer_Fachgesellschaft_fur_eine_bestimmte_Artengruppe_z_B_GdO_GAC_DDA_etc_")]
+
+#removed first part of the question to make it generic for all taxa
+
+sample_data_Q <- format4PCA(sample_data_Q)
+
+names(sample_data_Q) <- c("nuYears","Frq","StandMonitor","Knowledge","Member")
+
+sample_data_Q <- na.omit(sample_data_Q)
+nrow(sample_data_Q)
+
+#rotated PCA
+pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRUE)
+summary(pca_rotated)
+loadings(pca_rotated)
+plotPCA(pca_rotated)
+
+#### end ####
