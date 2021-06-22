@@ -47,6 +47,15 @@ swr = function(string, nwrap=20) {
 swr = Vectorize(swr)
 
 
+format4PCA <- function(df){
+  
+  #convert likert scale to ordinal scale
+  df <- ordinal_fn(df)
+  df <- mutate_all(df, function(x) as.numeric(as.character(x)))
+  return(df)
+  
+}
+
 
 # identify correlations above 0.5
 identifyCorrelations <- function(df){
