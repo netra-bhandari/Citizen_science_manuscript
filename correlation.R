@@ -7,12 +7,12 @@ motivationsDF <- motivationsDF[,1:9]
 #### correlation plot ####
 
 library(corrplot)
-corrplot(cor(motivationsDF[,1:9]))
-identifyCorrelations(motivationsDF[,1:9])
+corrplot(cor(motivationsDF))
+identifyCorrelations(motivationsDF)
 
 #### chord plot ####
 library(circlize)
-corrMatrix <- cor(motivationsDF[,1:9])
+corrMatrix <- cor(motivationsDF)
 corrMatrixm <- reshape2::melt(corrMatrix)
 corrMatrixm <- subset(corrMatrixm,!is.na(value))
 corrMatrixm <- subset(corrMatrixm,value!=1)
