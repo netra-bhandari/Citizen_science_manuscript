@@ -14,82 +14,11 @@ library("factoextra")
 library(ggpubr)
 library(ggthemes)
 
-
 source('helper_functions.R', encoding = 'UTF-8')
 
-### load dataset ###
+### read in a cleaned data frame ###
 
-survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
-
-#the following line Diana needed to do so that Netras script worked:
-names(survey_data) <- sapply(names(survey_data), function(x)gsub("\\.","_",x))
-
-### subset to people completing most of the survey ####
-
-pca_data <- survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
-colnames(pca_data)[1]<- "ID"
-
-### function to pull data for a specific taxa ####
-
-getTaxaData <- function(myTaxa){ 
-  
-pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_w?hlen_Sie_EINE_Artengruppe__),]
-taxa <- data.frame(pca_data[,grepl(paste0(myTaxa,collapse="|"), names(survey_data))])
-
-### #get other question (without taxa in question) ####
-
-otherQuestions <- c("Stellen_Sie_sich_vor__Sie_besuchen_einen_Ort",
-                    "wie_oft_haben_Sie_an_den_folgenden_Orte")
-
-#get columns with these headings
-other_data <- pca_data[,grepl(paste0(otherQuestions,collapse="|"),names(pca_data))]
- 
-### combine all questions ####
-
-pca_data <- cbind(taxa,other_data)
-
-### clean data for PCA ####
-
-pca_data <- as.data.frame(lapply(pca_data, factor)) 
-pca_data <- ordinal_fn(pca_data)
-sample_data <- mutate_all(pca_data, function(x) as.numeric(as.character(x)))
-
-
-return(sample_data)
-
-}
-
-### get taxa data frames ####
-
-#get birdDF
-birdDF <- getTaxaData(c("Vogel","V?gel"))
-
-#get plantsDF
-plantDF <- getTaxaData("Pflanzen")
-
-#get insectDF
-butterflyDF <- getTaxaData("Schmetterl") %>% add_column(taxa = "Butterfly")
-dragonflyDF <- getTaxaData("Libellen")%>% add_column(taxa = "Dragonfly")
-beetleDF <- getTaxaData(c("K?fer"))%>% add_column(taxa = "Beetle")
-beeDF <- getTaxaData("Bienen")%>% add_column(taxa = "Bee")
-
-#renaming taxa names to "insect" to make a common dataframe
-#then replace the colnames with new names 
-colnames(butterflyDF) <- gsub("Schmetterling", "insect", colnames(butterflyDF))
-colnames(butterflyDF) <- str_replace_all(colnames(butterflyDF),
-                                         c("insecten" = "insect",
-                                           "insects" = "insect"))
-colnames(beetleDF) = colnames(butterflyDF)
-colnames(dragonflyDF) = colnames(butterflyDF)
-colnames(beeDF) = colnames(butterflyDF)
-
-insectDF <- rbind(butterflyDF,dragonflyDF,beetleDF,beeDF)
-
-#get amphibians
-frogsDF <- getTaxaData("Amphibien")
-
-#combine all together
-allDF <- rbind(frogDF,insectDF,butterflyDF,birdDF)
+sample_data <- readRDS("cleaned-data/clean_data.RDS")
 
 ## make a common theme for plots
 theme_pca <- theme_classic()+
@@ -228,14 +157,17 @@ d <- doTaxaPCA(frogsDF)
 #pca_panel <- cowplot::plot_grid(plotlist = plist, ncol = 2)
 #ggsave("pca_panel.png", filename = pca_panel)
 
-
-
 ### motivations PCA ####
 
-motivationsDF <- pca_data[,10:18]
+motivationsDF <- sample_data[,grepl("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte",
+                                    names(sample_data))]
+
+#convert likert scale to ordinal scale
 motivationsDF <- ordinal_fn(motivationsDF)
 motivationsDF <- mutate_all(motivationsDF, function(x) as.numeric(as.character(x)))
-names(motivationsDF) <- sapply(names(motivationsDF),function(x)strsplit(x,"_____")[[1]][2])
+
+names(motivationsDF) <- gsub("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte_als_Sie_Beobachtungsdaten_erfasst_haben_","",names(motivationsDF))
+
 names(motivationsDF) <- c("improve species knowledge",
                           "contribute to science",
                           "support conservation",
@@ -246,20 +178,8 @@ names(motivationsDF) <- c("improve species knowledge",
                           "meet other people",
                           "have fun exploring")
 
-# #fit PCA
-# fit <-  prcomp(motivationsDF, scale = TRUE)
-# 
-# fviz_eig(fit)
-# 
-# biplot(fit)
-# 
-# fviz_pca_biplot(fit, 
-#                 col.var = "contrib",
-#                 gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#                 title = "Motivations to collect species data")
 
-
-#rotated PCA - maximizes the loading of each axis onto x and y
+# use rotated PCA - maximizes the loading of each axis onto x and y
 #https://stats.stackexchange.com/questions/59213/how-to-compute-varimax-rotated-principal-components-in-r
 
 library(psych)
@@ -267,12 +187,6 @@ pca_rotated <- principal(motivationsDF, rotate="varimax", nfactors=2, scores=TRU
 biplot(pca_rotated)
 summary(pca_rotated)
 loadings <- as.data.frame(unclass(pca_rotated$loadings))
-
-#using different package:
-#pca_rotated <- princomp(motivationsDF)
-#biplot(pca_rotated)
-#loadings<-as.data.frame(unclass(loadings(pca_rotated)))
-
 loadings$Names<-rownames(loadings)
 
 #use ggplot
@@ -285,10 +199,14 @@ ggplot()+
   scale_y_continuous("Principal Component 2", limits=c(-0.1,0.9))+
   theme_few()
 
-
 #save scores and person ID
-motivationsDF$ID <- pca_data$ID
+motivationsDF$ID <- sample_data$ID
 motivationsDF$scores1 <- pca_rotated$scores[,1]
 motivationsDF$scores2 <- pca_rotated$scores[,2]
 saveRDS(motivationsDF,file="model-outputs/motivationsDF.rds")
 
+#or a correlation plot?
+cor(motivationsDF)
+
+library(corrplot)
+corrplot(cor(motivationsDF[,1:9]))
