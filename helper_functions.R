@@ -11,9 +11,9 @@ ordinal_fn <- function(x){
                                         . ==  "wei? nicht" ~ "0",
                                         . == "sehr wichtig" ~ "5",
                                         . == "wichtig" ~ "4",
-                                        . == "mäßig wichtig" ~ "3",
+                                        . == "mÃ¤Ãig wichtig" ~ "3",
                                         . == "wenig wichtig" ~ "2",
-                                        . == "überhaupt nicht wichtig" ~ "1",
+                                        . == "Ã¼berhaupt nicht wichtig" ~ "1",
                                         . ==   "alle"~ "5",
                                         . ==   "die meisten" ~ "4",
                                         . ==   "einige" ~ "3",
@@ -34,7 +34,7 @@ ordinal_fn <- function(x){
 
 
 combineTaxa <- function(x){
-  x[x %in% c("Bienen","Käfer","Libellen","Schmetterlinge")] <- "Insects"
+  x[x %in% c("Bienen","KÃ¤fer","Libellen","Schmetterlinge")] <- "Insects"
 }
 
 
