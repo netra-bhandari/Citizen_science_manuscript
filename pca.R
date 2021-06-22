@@ -56,7 +56,7 @@ theme_pca <- theme_classic()+
 doTaxaPCA <- function(sample_data){
   
   #q1
-  sample_data_Q <- sample_data[,grepl("gegangen_sind__wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
+  sample_data_Q <- sample_data[,grepl("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
   #removed first part of the question to make it generic for all taxa
   names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
   sample_data_Q <- na.omit(sample_data_Q)
