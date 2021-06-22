@@ -20,16 +20,21 @@ names(survey_data) <- sapply(names(survey_data), function(x)gsub("\\.","_",x))
 
 ### subset to people completing most of the survey ####
 
-pca_data <- survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
-colnames(pca_data)[1]<- "ID"
+survey_data <- survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
+colnames(survey_data)[1]<- "ID"
 
-getTaxaData <- function(myTaxa){ 
+write.csv(data.frame(Questions=names(survey_data)),file="Survey_columns.csv",row.names = FALSE)
+
+getTaxaData <- function(survey_data,myTaxa){ 
   
-  pca_data <- pca_data[grepl(paste0(myTaxa,collapse="|"), pca_data$Bitte_wählen_Sie_EINE_Artengruppe__),]
-  taxa <- data.frame(pca_data[,grepl(paste0(myTaxa,collapse="|"), names(survey_data))])
+  #get rows for the taxa
+  survey_data_taxa <- survey_data[grepl(paste0(myTaxa,collapse="|"), survey_data$Bitte_wählen_Sie_EINE_Artengruppe__),]
+  
+  #get columns for the taxa (with taxa specific questions)
+  survey_data_taxa_questions <- data.frame(survey_data_taxa[,grepl(paste0(myTaxa,collapse="|"), names(survey_data))])
   
   #remove the taxa name from the question
-  
+  names(survey_data_taxa_questions) <- gsub(paste0(myTaxa,collapse="|"),"",names(survey_data_taxa_questions))
   
   ### #get other question (without taxa in question) ####
   
@@ -51,25 +56,28 @@ getTaxaData <- function(myTaxa){
                       "Wie_lauten_die_ersten_zwei_Ziffern")
   
   #get columns with these headings
-  other_data <- pca_data[,grepl(paste0(otherQuestions,collapse="|"),names(pca_data))]
+  other_questions <- survey_data_taxa[,grepl(paste0(otherQuestions,collapse="|"),names(survey_data_taxa))]
   
   ### combine all questions ####
   
-  pca_data <- cbind(taxa,other_data)
+  temp <- cbind(survey_data_taxa_questions,other_questions)
   
-  return(pca_data)
+  #remove all German characters
+  names(temp) <- sapply(names(temp),function(x)iconv(x, to='ASCII//TRANSLIT'))
   
+  return(temp)
+
 }
 
 ### get taxa data frames ####
 
-birdDF <- getTaxaData(c("Vogel","V?gel","Vögel"))
+birdDF <- getTaxaData(c("Vogel","Vögel"))
 plantDF <- getTaxaData("Pflanzen")
-butterflyDF <- getTaxaData("Schmetterl") 
-dragonflyDF <- getTaxaData("Libellen")
-beetleDF <- getTaxaData(c("K?fer","Käfer"))
+butterflyDF <- getTaxaData("Schmetterl","Schmetterlinge","Schmetterlings") 
+dragonflyDF <- getTaxaData("Libellen","Libelle")
+beetleDF <- getTaxaData(c("Kafer","Käfer"))
 beeDF <- getTaxaData("Bienen")
-frogsDF <- getTaxaData("Amphibien")
+frogsDF <- getTaxaData("Amphibien","Amphibien/Reptilen")
 
 
 #make all have the same set of headings
