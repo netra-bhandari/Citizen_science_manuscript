@@ -41,7 +41,7 @@ insectDF <- subset(survey_data,Taxa %in% c("Libellen","Schmetterlinge","Käfer",
 #get amphibians
 frogsDF <- subset(survey_data,Taxa="Amphibien/Reptilien")
 
-### function for pca per question ####
+### taxa pca per question ####
 
 ## make a common theme for plots
 theme_pca <- theme_classic()+
@@ -241,3 +241,27 @@ circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
   circos.text(mean(xlim), ylim[1] + .1, sector.name, cex=0.6,facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
   circos.axis(h = "top", labels.cex = 0.2, major.tick.length = 0.2, sector.index = sector.name, track.index = 2)
 }, bg.border = NA)
+
+### active search pca ###
+
+sample_data_Q <- sample_data[,grepl("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
+#removed first part of the question to make it generic for all taxa
+
+sample_data_Q <- format4PCA(sample_data_Q)
+
+names(sample_data_Q) <- gsub("Wenn_Sie_aktiv_auf_die_Suche_nach_gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen_","",names(sample_data_Q))
+
+sample_data_Q <- na.omit(sample_data_Q)
+
+names(sample_data_Q) <- c("complete checklist","all species","interesting species",
+                          "common species","rare species")
+#rotated PCA
+pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRUE)
+summary(pca_rotated)
+plotPCA(pca_rotated)
+
+#save scores and person ID
+motivationsDF$ID <- sample_data_Q$ID
+motivationsDF$scores1 <- pca_rotated$scores[,1]
+motivationsDF$scores2 <- pca_rotated$scores[,2]
+saveRDS(motivationsDF,file="model-outputs/motivationsDF.rds")
