@@ -1,5 +1,6 @@
 # data folder
 data/
+cleaned-data/
 
 #plot folder
 plots/
