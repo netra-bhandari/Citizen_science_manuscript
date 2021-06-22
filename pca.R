@@ -225,8 +225,42 @@ motivationsDF$scores1 <- pca_rotated$scores[,1]
 motivationsDF$scores2 <- pca_rotated$scores[,2]
 saveRDS(motivationsDF,file="model-outputs/motivationsDF.rds")
 
-#or a correlation plot?
-cor(motivationsDF)
-
+#or a correlation plot
 library(corrplot)
 corrplot(cor(motivationsDF[,1:9]))
+identifyCorrelations(motivationsDF[,1:9])
+
+#chord plot??
+corrMatrix<-cor(motivationsDF[,1:9])
+
+library(circlize)
+corrMatrix[upper.tri(corrMatrix)] <- NA
+#set everything less than 0.7 as 0 (for transparency, see later)
+corrMatrix[corrMatrix<0.7] <- 0.0
+
+#melt matrix and remove identity correlations
+corrMatrixm<-melt(corrMatrix)
+corrMatrixm<-subset(corrMatrixm,!is.na(value))
+corrMatrixm<-subset(corrMatrixm,value!=1)
+
+#specific colour of strong correlation links
+corrMatrixm$Colour[corrMatrixm$value!=0.1]<-col2hex("grey70")
+#shade out weak links
+corrMatrixm$Colour[corrMatrixm$value==0.0]<-"#FFFFFF00"
+
+#plot chord diagram
+#Fig. 1#
+chordDiagram(corrMatrixm,symmetric = FALSE,
+             transparency=0.5,
+             col=corrMatrixm$Colour,
+             grid.col=rev(mycols),
+             order=rev(myorder),
+             annotationTrack = "grid", preAllocateTracks = 1)
+#change label direction
+circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
+  xlim = get.cell.meta.data("xlim")
+  ylim = get.cell.meta.data("ylim")
+  sector.name = get.cell.meta.data("sector.index")
+  circos.text(mean(xlim), ylim[1] + .1, sector.name, cex=0.6,facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
+  circos.axis(h = "top", labels.cex = 0.2, major.tick.percentage = 0.2, sector.index = sector.name, track.index = 2)
+}, bg.border = NA)
