@@ -18,46 +18,27 @@ source('helper_functions.R', encoding = 'UTF-8')
 
 ### read in a cleaned data frame ###
 
-sample_data <- readRDS("cleaned-data/clean_data.RDS")
-
 ### load dataset ###
-
-survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
 
 ##trial with cleaned-data (keeping variable name same here so as not to make multiple changes below)
 survey_data <- readRDS("cleaned-data/clean_data.RDS")
+survey_data$Taxa <- survey_data$Bitte.wählen.Sie.EINE.Artengruppe..
 
 ### get taxa data frames ####
 
+unique(survey_data$Taxa)
+
 #get birdDF
-birdDF <- getTaxaData(c("Vogel","V?gel"))
+birdDF <- subset(survey_data,Taxa="Vögel")
 
 #get plantsDF
-plantDF <- getTaxaData("Pflanzen")
+plantDF <- subset(survey_data,Taxa="Pflanzen")
 
 #get insectDF
-butterflyDF <- getTaxaData("Schmetterl") %>% add_column(taxa = "Butterfly")
-dragonflyDF <- getTaxaData("Libellen")%>% add_column(taxa = "Dragonfly")
-beetleDF <- getTaxaData(c("K?fer"))%>% add_column(taxa = "Beetle")
-beeDF <- getTaxaData("Bienen")%>% add_column(taxa = "Bee")
-
-#renaming taxa names to "insect" to make a common dataframe
-#then replace the colnames with new names 
-colnames(butterflyDF) <- gsub("Schmetterling", "insect", colnames(butterflyDF))
-colnames(butterflyDF) <- str_replace_all(colnames(butterflyDF),
-                                         c("insecten" = "insect",
-                                           "insects" = "insect"))
-colnames(beetleDF) = colnames(butterflyDF)
-colnames(dragonflyDF) = colnames(butterflyDF)
-colnames(beeDF) = colnames(butterflyDF)
-
-insectDF <- rbind(butterflyDF,dragonflyDF,beetleDF,beeDF)
+insectDF <- subset(survey_data,Taxa %in% c("Libellen","Schmetterlinge","Käfer","Bienen"))
 
 #get amphibians
-frogsDF <- getTaxaData("Amphibien")
-
-#combine all together
-allDF <- rbind(frogDF,insectDF,butterflyDF,birdDF)
+frogsDF <- subset(survey_data,Taxa="Amphibien/Reptilien")
 
 ## make a common theme for plots
 theme_pca <- theme_classic()+
