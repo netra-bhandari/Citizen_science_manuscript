@@ -3,7 +3,7 @@
 #replace ordinal scale to a numeric scale
 
 ordinal_fn <- function(x){
-  x <- x %>%  mutate_all(funs(case_when(. == "sehr oft" ~ "5" ,
+  x <- x %>%  mutate_if(is.character,funs(case_when(. == "sehr oft" ~ "5" ,
                                         . ==  "oft" ~ "4" ,
                                         . ==  "manchmal" ~ "3" ,
                                         . ==  "selten" ~ "2",
@@ -24,6 +24,12 @@ ordinal_fn <- function(x){
                                         . ==  "mäßig wahrscheinlich" ~ "3" ,
                                         . ==  "ziemlich wahrscheinlich" ~ "4",
                                         . ==  "sehr wahrscheinlich" ~ "5",
+                                        . == "Täglich / fast täglich" ~ "6",
+                                        . == "Wöchentlich / fast wöchentlich" ~ "5",
+                                        . == "all zwei Woche/ fast all zwei Woche" ~ "4",
+                                        . == "Monatlich / fast monatlich" ~ "3",
+                                        . == "alle zwei Monate / fast alle zwei Monate" ~ "2",
+                                        . == "Seltener" ~ "1",
                                         . ==  "Ja" ~ "1",
                                         . ==   "Nein" ~ "0"
   )))
@@ -49,7 +55,6 @@ swr = Vectorize(swr)
 #functions for pca analysis
 
 format4PCA <- function(df){
-  
   #convert likert scale to ordinal scale
   df <- ordinal_fn(df)
   df <- mutate_all(df, function(x) as.numeric(as.character(x)))
