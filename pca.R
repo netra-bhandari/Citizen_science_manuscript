@@ -13,6 +13,7 @@ library("FactoMineR")
 library("factoextra")
 library(ggpubr)
 library(ggthemes)
+library(psych)
 
 source('helper_functions.R', encoding = 'UTF-8')
 
@@ -181,11 +182,7 @@ d <- doTaxaPCA(frogsDF)
 
 motivationsDF <- sample_data[,grepl("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte",
                                     names(sample_data))]
-
-#convert likert scale to ordinal scale
-motivationsDF <- ordinal_fn(motivationsDF)
-motivationsDF <- mutate_all(motivationsDF, function(x) as.numeric(as.character(x)))
-
+motivationsDF <- format4PCA(motivationsDF)
 names(motivationsDF) <- gsub("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte_als_Sie_Beobachtungsdaten_erfasst_haben_","",names(motivationsDF))
 
 names(motivationsDF) <- c("improve species knowledge",
@@ -202,22 +199,10 @@ names(motivationsDF) <- c("improve species knowledge",
 # use rotated PCA - maximizes the loading of each axis onto x and y
 #https://stats.stackexchange.com/questions/59213/how-to-compute-varimax-rotated-principal-components-in-r
 
-library(psych)
+#rotated PCA
 pca_rotated <- principal(motivationsDF, rotate="varimax", nfactors=2, scores=TRUE)
-biplot(pca_rotated)
 summary(pca_rotated)
-loadings <- as.data.frame(unclass(pca_rotated$loadings))
-loadings$Names<-rownames(loadings)
-
-#use ggplot
-ggplot()+
-  geom_segment(data=loadings, aes(x=0, y=0, xend=RC1, yend=RC2), 
-               arrow=arrow(length=unit(0.2,"cm")),colour="grey")+
-  geom_text_repel(data=loadings, aes(x=RC1, y=RC2, label=Names), 
-            alpha=0.6, size=4)+
-  scale_x_continuous("Principal Component 1", limits=c(-0.25,0.9))+
-  scale_y_continuous("Principal Component 2", limits=c(-0.1,0.9))+
-  theme_few()
+plotPCA(pca_rotated)
 
 #save scores and person ID
 motivationsDF$ID <- sample_data$ID
@@ -231,36 +216,28 @@ corrplot(cor(motivationsDF[,1:9]))
 identifyCorrelations(motivationsDF[,1:9])
 
 #chord plot??
-corrMatrix<-cor(motivationsDF[,1:9])
-
 library(circlize)
-corrMatrix[upper.tri(corrMatrix)] <- NA
-#set everything less than 0.7 as 0 (for transparency, see later)
-corrMatrix[corrMatrix<0.7] <- 0.0
-
-#melt matrix and remove identity correlations
-corrMatrixm<-melt(corrMatrix)
-corrMatrixm<-subset(corrMatrixm,!is.na(value))
-corrMatrixm<-subset(corrMatrixm,value!=1)
-
+corrMatrix <- cor(motivationsDF[,1:9])
+corrMatrixm <- melt(corrMatrix)
+corrMatrixm <- subset(corrMatrixm,!is.na(value))
+corrMatrixm <- subset(corrMatrixm,value!=1)
 #specific colour of strong correlation links
-corrMatrixm$Colour[corrMatrixm$value!=0.1]<-col2hex("grey70")
-#shade out weak links
-corrMatrixm$Colour[corrMatrixm$value==0.0]<-"#FFFFFF00"
+corrMatrixm$Colour <- "#FFFFFF00"
+corrMatrixm$Colour[abs(corrMatrixm$value) > 0.5] <- gplots::col2hex("grey70")
 
 #plot chord diagram
-#Fig. 1#
 chordDiagram(corrMatrixm,symmetric = FALSE,
-             transparency=0.5,
-             col=corrMatrixm$Colour,
-             grid.col=rev(mycols),
-             order=rev(myorder),
+             transparency = 0.5,
+             col = corrMatrixm$Colour,
+             #grid.col=rev(mycols),
+             order= names(motivationsDF),
              annotationTrack = "grid", preAllocateTracks = 1)
+
 #change label direction
 circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
   xlim = get.cell.meta.data("xlim")
   ylim = get.cell.meta.data("ylim")
   sector.name = get.cell.meta.data("sector.index")
   circos.text(mean(xlim), ylim[1] + .1, sector.name, cex=0.6,facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
-  circos.axis(h = "top", labels.cex = 0.2, major.tick.percentage = 0.2, sector.index = sector.name, track.index = 2)
+  circos.axis(h = "top", labels.cex = 0.2, major.tick.length = 0.2, sector.index = sector.name, track.index = 2)
 }, bg.border = NA)
