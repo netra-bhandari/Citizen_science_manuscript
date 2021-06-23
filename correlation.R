@@ -79,4 +79,12 @@ ggraph(graph_cors) +
   theme_graph() +
   labs(title = "Correlations between car variables")
 
+
+#### igraph #####
+#code from Maria - see script - 06.1_Fig_networks_circles.R
+
+library(igraph)
+
+
+
 #### end ####
