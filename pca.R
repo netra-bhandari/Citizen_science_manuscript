@@ -22,24 +22,24 @@ source('helper_functions.R', encoding = 'UTF-8')
 ### load dataset ###
 
 ##trial with cleaned-data (keeping variable name same here so as not to make multiple changes below)
-survey_data <- readRDS("cleaned-data/clean_data.RDS")
-survey_data$Taxa <- survey_data$Bitte.wählen.Sie.EINE.Artengruppe..
+sample_data <- readRDS("cleaned-data/clean_data.RDS")
+sample_data$Taxa <- sample_data$Bitte.wahlen.Sie.EINE.Artengruppe..
 
 ### get taxa data frames ####
 
-unique(survey_data$Taxa)
+unique(sample_data$Taxa)
 
 #get birdDF
-birdDF <- subset(survey_data,Taxa="Vögel")
+birdDF <- subset(sample_data,Taxa="Vögel")
 
 #get plantsDF
-plantDF <- subset(survey_data,Taxa="Pflanzen")
+plantDF <- subset(sample_data,Taxa="Pflanzen")
 
 #get insectDF
-insectDF <- subset(survey_data,Taxa %in% c("Libellen","Schmetterlinge","Käfer","Bienen"))
+insectDF <- subset(sample_data,Taxa %in% c("Libellen","Schmetterlinge","Käfer","Bienen"))
 
 #get amphibians
-frogsDF <- subset(survey_data,Taxa="Amphibien/Reptilien")
+frogsDF <- subset(sample_data,Taxa="Amphibien/Reptilien")
 
 ### taxa pca per question ####
 
@@ -56,7 +56,7 @@ theme_pca <- theme_classic()+
 doTaxaPCA <- function(sample_data){
   
   #q1
-  sample_data_Q <- sample_data[,grepl("gegangen_sind__wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
+  sample_data_Q <- sample_data[,grepl("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
   #removed first part of the question to make it generic for all taxa
   names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
   sample_data_Q <- na.omit(sample_data_Q)
@@ -210,39 +210,7 @@ motivationsDF$scores1 <- pca_rotated$scores[,1]
 motivationsDF$scores2 <- pca_rotated$scores[,2]
 saveRDS(motivationsDF,file="model-outputs/motivationsDF.rds")
 
-#or a correlation plot
-library(corrplot)
-corrplot(cor(motivationsDF[,1:9]))
-identifyCorrelations(motivationsDF[,1:9])
-
-#chord plot??
-library(circlize)
-corrMatrix <- cor(motivationsDF[,1:9])
-corrMatrixm <- melt(corrMatrix)
-corrMatrixm <- subset(corrMatrixm,!is.na(value))
-corrMatrixm <- subset(corrMatrixm,value!=1)
-#specific colour of strong correlation links
-corrMatrixm$Colour <- "#FFFFFF00"
-corrMatrixm$Colour[abs(corrMatrixm$value) > 0.5] <- gplots::col2hex("grey70")
-
-#plot chord diagram
-chordDiagram(corrMatrixm,symmetric = FALSE,
-             transparency = 0.5,
-             col = corrMatrixm$Colour,
-             #grid.col=rev(mycols),
-             order= names(motivationsDF),
-             annotationTrack = "grid", preAllocateTracks = 1)
-
-#change label direction
-circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
-  xlim = get.cell.meta.data("xlim")
-  ylim = get.cell.meta.data("ylim")
-  sector.name = get.cell.meta.data("sector.index")
-  circos.text(mean(xlim), ylim[1] + .1, sector.name, cex=0.6,facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
-  circos.axis(h = "top", labels.cex = 0.2, major.tick.length = 0.2, sector.index = sector.name, track.index = 2)
-}, bg.border = NA)
-
-### active search pca ###
+#### active search pca ####
 
 sample_data_Q <- sample_data[,grepl("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
 #removed first part of the question to make it generic for all taxa
@@ -280,7 +248,6 @@ pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRU
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
-
 
 #### trap PCA ####
 
@@ -322,3 +289,28 @@ pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRU
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
+
+
+#### experience PCA ####
+
+sample_data_Q <- sample_data[,c("Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_","Wie_oft_haben_Sie_im_Fruhling_oder_Sommer_2020_Artdaten_gesammelt_",
+                                "Nehmen_Sie_an_einem_gross_angelegten_standardisierten_Monitoringsystem_teil_z_B_Tagfalter_Monitoring_Deutschland_",
+                                "Besitzen_Sie_Fachkenntnisse_im_Bereich_des_Biodiversitatsmonitorings_",
+                                "Sind_Sie_Mitglied_in_einer_Fachgesellschaft_fur_eine_bestimmte_Artengruppe_z_B_GdO_GAC_DDA_etc_")]
+
+#removed first part of the question to make it generic for all taxa
+
+sample_data_Q <- format4PCA(sample_data_Q)
+
+names(sample_data_Q) <- c("nuYears","Frq","StandMonitor","Knowledge","Member")
+
+sample_data_Q <- na.omit(sample_data_Q)
+nrow(sample_data_Q)
+
+#rotated PCA
+pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRUE)
+summary(pca_rotated)
+loadings(pca_rotated)
+plotPCA(pca_rotated)
+
+#### end ####
