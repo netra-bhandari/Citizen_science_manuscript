@@ -1,5 +1,7 @@
 #get pca_data from the pca.R script
 source('helper_functions.R', encoding = 'UTF-8')
+survey_data <- readRDS("cleaned-data/clean_data.RDS")
+
 #Questions
 # (1) Taxon group differences: we used ordinal regression analysis to compare responses to the same question among participants with different focal taxonomic groups using the ordinal R package or a chi-square test. 
 
@@ -13,7 +15,21 @@ source('helper_functions.R', encoding = 'UTF-8')
 
 # age group: chisq.test(df$Taxa, df$Age-group)
 
+
+
 # number of years of experience: glm(nuYears ~ Taxon-group, data=df, family=Poisson)
+shapiro.test(survey_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_) #normal
+
+summary(glm(Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_ ~ Bitte_wahlen_Sie_EINE_Artengruppe_ ,
+    data = survey_data, family = poisson))
+
+## summary of glm 
+## bienen  -0.66 NS
+## libellen -0.025 NS
+## Pfalnzen 0.078 S
+## Schmetterlinge -0.03 NS
+## Sonstiges -0.056 NS
+
 
 # frequency of data collection: clm(frq ~ Taxon_group, data=df)
 ##as.ordered.factor
