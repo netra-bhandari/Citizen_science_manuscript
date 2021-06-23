@@ -1,4 +1,5 @@
 #Diana just playing with some visualization options
+library(tidyverse)
 
 #get motivationsDF from the pca script
 motivationsDF <- readRDS("model-outputs/motivationsDF.RDS")
@@ -61,7 +62,7 @@ library(ggraph)
 # Create a tidy data frame of correlations
 tidy_cors <- motivationsDF %>% 
   correlate() %>% 
-  stretch()
+  stretch() 
 
 # Convert correlations stronger than some value
 # to an undirected graph object
@@ -82,9 +83,35 @@ ggraph(graph_cors) +
 
 #### igraph #####
 #code from Maria - see script - 06.1_Fig_networks_circles.R
-
 library(igraph)
 
+routes_igraph <- tidy_cors %>%
+  graph_from_data_frame(directed = FALSE)
+
+tidy_cors2 <- tidy_cors
+tidy_cors2[is.na(tidy_cors2)] <- 0.01
+
+
+# function to align the vertex labels nicely (from https://kieranhealy.org/blog/archives/2011/02/18/aligning-labels-in-circular-igraph-layouts/)
+radian.rescale <- function(x, start=0, direction=1) { #start = offset from 12 o'clock in radians; direction = 1 for clockwise; -1 for anti-clockwise.
+  c.rotate <- function(x) (x + start) %% (2 * pi) * direction
+  c.rotate(scales::rescale(x, c(0, 2 * pi), range(x)))
+}
+
+lab.locs <- radian.rescale(x=1:length(names(V(routes_igraph))), direction=-1, start=0) #start = offset from 12 o'clock in 
+
+plot1<- plot(routes_igraph, 
+            edge.arrow.size = 0.2, 
+            edge.curved = 0,
+            edge.width = tidy_cors2$r*10,
+            vertex.color= "red", 
+            vertex.label.dist = 2.5,
+            vertex.label.degree = lab.locs,
+            vertex.label.color = "black",
+            vertex.label.cex = 0.9,
+            vertex.label = names(V(routes_igraph)),
+            layout=layout_in_circle(routes_igraph))
 
 
 #### end ####
+
