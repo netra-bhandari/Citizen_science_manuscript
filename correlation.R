@@ -1,5 +1,6 @@
 #Diana just playing with some visualization options
 library(tidyverse)
+library(wesanderson)
 
 #get motivationsDF from the pca script
 motivationsDF <- readRDS("model-outputs/motivationsDF.RDS")
@@ -88,7 +89,7 @@ library(corrr)
 library(igraph)
 library(ggraph)
 
-tidy_cors <- motivationsDF %>% 
+tidy_cors <- motivationsDF[,-1] %>% 
   correlate() %>% 
   stretch()  
 
@@ -101,6 +102,7 @@ tidy_cors2 <- tidy_cors
 tidy_cors2[is.na(tidy_cors2)] <- 0.01
 #decide on colours
 tidy_cors2$Colour<- ifelse(abs(tidy_cors2$r>0.4), gplots::col2hex("grey70"),"#FFFFFF00")
+table(tidy_cors2$Colour)
 
 # function to align the vertex labels nicely (from https://kieranhealy.org/blog/archives/2011/02/18/aligning-labels-in-circular-igraph-layouts/)
 radian.rescale <- function(x, start=0, direction=1) { #start = offset from 12 o'clock in radians; direction = 1 for clockwise; -1 for anti-clockwise.
@@ -114,7 +116,7 @@ lab.locs <- radian.rescale(x=1:length(names(V(routes_igraph))),
 plot(routes_igraph, 
             edge.curved = 0,
             edge.color = tidy_cors2$Colour,
-            edge.width = tidy_cors2$r*10,
+            edge.width = tidy_cors2$r*5,
             vertex.color= "red", 
             vertex.label.dist = 2.5,
             vertex.label.degree = lab.locs,
@@ -123,6 +125,78 @@ plot(routes_igraph,
             vertex.label = names(V(routes_igraph)),
             layout=layout_in_circle(routes_igraph))
 
+
+#### combining questions ####
+
+#get the data frames in the pca script
+allDF <- surveytypeDF %>%
+          full_join(.,activeDF,by="ID")%>%
+          full_join(.,incidentalDF,by="ID")%>%
+          full_join(.,motivationsDF,by="ID")%>%
+          full_join(.,locationDF,by="ID")%>%
+          full_join(.,experienceDF,by="ID")
+
+myOrder <- c(rep("Survey_type",ncol(surveytypeDF[,-1])),
+            rep("Active search",ncol(activeDF[,-1])),
+            rep("Incidental",ncol(incidentalDF[,-1])),
+            rep("Motivations",ncol(motivationsDF[,-1])),
+            rep("Location",ncol(locationDF[,-1])),
+            rep("Experience",ncol(experienceDF[,-1])))
+
+myCols <- wes_palette("Zissou1", 6, type = "continuous")
+myCols <- c(rep(myCols[1],ncol(surveytypeDF[,-1])),
+            rep(myCols[2],ncol(activeDF[,-1])),
+            rep(myCols[3],ncol(incidentalDF[,-1])),
+            rep(myCols[4],ncol(motivationsDF[,-1])),
+            rep(myCols[5],ncol(locationDF[,-1])),
+            rep(myCols[6],ncol(experienceDF[,-1])))
+
+tidy_cors <- allDF[,-1] %>% 
+  correlate(method="spearman") %>% 
+  stretch()  
+
+tidy_cors %>%
+  filter(abs(r)>0.4) %>%
+  nrow()
+
+routes_igraph <- tidy_cors %>% 
+  graph_from_data_frame(directed = FALSE)
+
+#sort attributes of network
+#replace NAs witj lower number
+tidy_cors2 <- tidy_cors
+tidy_cors2[is.na(tidy_cors2)] <- 0.01
+#decide on colours
+tidy_cors2$Colour <- ifelse(abs(tidy_cors2$r)>0.25, gplots::col2hex("grey70"),"#FFFFFF00")
+table(tidy_cors2$Colour)
+tidy_cors2$r <- abs(tidy_cors2$r) 
+
+# function to align the vertex labels nicely (from https://kieranhealy.org/blog/archives/2011/02/18/aligning-labels-in-circular-igraph-layouts/)
+radian.rescale <- function(x, start=0, direction=1) { #start = offset from 12 o'clock in radians; direction = 1 for clockwise; -1 for anti-clockwise.
+  c.rotate <- function(x) (x + start) %% (2 * pi) * direction
+  c.rotate(scales::rescale(x, c(0, 2 * pi), range(x)))
+}
+
+lab.locs <- radian.rescale(x=1:length(names(V(routes_igraph))), 
+                           direction=-1, start=0) #start = offset from 12 o'clock in 
+
+plot(routes_igraph, 
+     edge.curved = 0,
+     edge.color = tidy_cors2$Colour,
+     edge.width = 4,
+     vertex.size = 10,
+     vertex.color= myCols, 
+     vertex.label.dist = 2.5,
+     vertex.label.degree = lab.locs,
+     vertex.label.color = "black",
+     vertex.label.cex = 0.6,
+     vertex.label = names(V(routes_igraph)),
+     layout = layout_in_circle(routes_igraph))
+
+legend(-1.5,1.55,
+       legend=unique(myOrder),cex=0.8,col='black',
+       pch=21, pt.bg=unique(myCols),bty="n",
+       ncol=3)
 
 #### end ####
 
