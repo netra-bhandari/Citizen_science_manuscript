@@ -180,12 +180,14 @@ d <- doTaxaPCA(frogsDF)
 
 ### motivations PCA ####
 
-motivationsDF <- sample_data[,grepl("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte",
-                                    names(sample_data))]
+motivationsDF <- sample_data[,c(1,grep("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte",
+                                    names(sample_data)))]
+
+
 motivationsDF <- format4PCA(motivationsDF)
 names(motivationsDF) <- gsub("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte_als_Sie_Beobachtungsdaten_erfasst_haben_","",names(motivationsDF))
 
-names(motivationsDF) <- c("improve species knowledge",
+names(motivationsDF)[-1] <- c("improve species knowledge",
                           "contribute to science",
                           "support conservation",
                           "spend time outdoors",
@@ -200,92 +202,91 @@ names(motivationsDF) <- c("improve species knowledge",
 #https://stats.stackexchange.com/questions/59213/how-to-compute-varimax-rotated-principal-components-in-r
 
 #rotated PCA
-pca_rotated <- principal(motivationsDF, rotate="varimax", nfactors=2, scores=TRUE)
+pca_rotated <- principal(motivationsDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 plotPCA(pca_rotated)
 
 #save scores and person ID
-motivationsDF$ID <- sample_data$ID
 motivationsDF$scores1 <- pca_rotated$scores[,1]
 motivationsDF$scores2 <- pca_rotated$scores[,2]
 saveRDS(motivationsDF,file="model-outputs/motivationsDF.rds")
 
 #### active search pca ####
 
-sample_data_Q <- sample_data[,grepl("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
+activeDF <- sample_data[,c(1,grep("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data)))]
 #removed first part of the question to make it generic for all taxa
 
-sample_data_Q <- format4PCA(sample_data_Q)
+activeDF <- format4PCA(activeDF)
 
-names(sample_data_Q) <- gsub("Wenn_Sie_aktiv_auf_die_Suche_nach_gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen_","",names(sample_data_Q))
+names(activeDF) <- gsub("Wenn_Sie_aktiv_auf_die_Suche_nach_gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen_","",names(activeDF))
 
-sample_data_Q <- na.omit(sample_data_Q)
+activeDF <- na.omit(activeDF)
 
-names(sample_data_Q) <- c("complete checklist","all species","interesting species",
+names(activeDF)[-1] <- c("complete checklist","all species","interesting species",
                           "common species","rare species")
 #rotated PCA
-pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRUE)
+pca_rotated <- principal(activeDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
 ### incidental PCA ####
 
-sample_data_Q <- sample_data[,grepl("Was_veranlasst_Sie_dazu",names(sample_data))]
+incidentalDF <- sample_data[,c(1,grep("Was_veranlasst_Sie_dazu",names(sample_data)))]
 #removed first part of the question to make it generic for all taxa
 
-sample_data_Q <- format4PCA(sample_data_Q)
+incidentalDF <- format4PCA(incidentalDF)
 
-names(sample_data_Q) <- gsub("Was_veranlasst_Sie_dazu_eine_Beobachtung_zu_melden_wenn_Sie_eine_Art_zufallig_sehen_ohne_aktive_Suche_Bitte_geben_Sie_an_wie_oft_die_folgenden_Grunde_bei_Ihnen_zur_Meldung_einer_Beobachtung_fuhren_","",names(sample_data_Q))
+names(incidentalDF) <- gsub("Was_veranlasst_Sie_dazu_eine_Beobachtung_zu_melden_wenn_Sie_eine_Art_zufallig_sehen_ohne_aktive_Suche_Bitte_geben_Sie_an_wie_oft_die_folgenden_Grunde_bei_Ihnen_zur_Meldung_einer_Beobachtung_fuhren_","",names(incidentalDF))
 
-sample_data_Q <- na.omit(sample_data_Q)
+incidentalDF <- na.omit(incidentalDF)
 
-names(sample_data_Q) <- c("rare species","many species at same time", "unexpected species",
+names(incidentalDF)[-1] <- c("rare species","many species at same time", "unexpected species",
                           "first time of year","unknown species","many indivdiduals at the same time",
                           "interesing species")
 #rotated PCA
-pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRUE)
+pca_rotated <- principal(incidentalDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
 #### trap PCA ####
 
-sample_data_Q <- sample_data[,grepl("Nach_welchem_Schema_erfassen_Sie_",names(sample_data))]
+trapDF <- sample_data[,c(1,grep("Nach_welchem_Schema_erfassen_Sie_",names(sample_data)))]
+
 #removed first part of the question to make it generic for all taxa
+names(trapDF) <- gsub("Nach_welchem_Schema_erfassen_Sie_die_mit_der_Falle_gefangenen_Arten_","",names(trapDF))
 
-sample_data_Q <- format4PCA(sample_data_Q)
+trapDF <- format4PCA(trapDF)
 
-names(sample_data_Q) <- gsub("Nach_welchem_Schema_erfassen_Sie_die_mit_der_Falle_gefangenen_Arten_","",names(sample_data_Q))
+trapDF <- na.omit(trapDF)
+nrow(trapDF)
 
-sample_data_Q <- na.omit(sample_data_Q)
-nrow(sample_data_Q)
-
-names(sample_data_Q) <- c("all species","interesting species","common species",
+names(trapDF)[-1] <- c("all species","interesting species","common species",
                           "rare species","new species")
 #rotated PCA
-pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRUE)
+pca_rotated <- principal(trapDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
 #### location PCA ####
 
-sample_data_Q <- sample_data[,grepl("wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten",names(sample_data))]
+locationDF <- sample_data[,c(1,grep("wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten",names(sample_data)))]
 #removed first part of the question to make it generic for all taxa
 
-sample_data_Q <- format4PCA(sample_data_Q)
+locationDF <- format4PCA(locationDF)
 
-names(sample_data_Q) <- gsub("Wenn_Sie_an_den_Fruhling_oder_Sommer_2020_denken_wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten_gesucht_","",names(sample_data_Q))
+names(locationDF) <- gsub("Wenn_Sie_an_den_Fruhling_oder_Sommer_2020_denken_wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten_gesucht_","",names(locationDF))
 
-sample_data_Q <- na.omit(sample_data_Q)
-nrow(sample_data_Q)
+locationDF <- na.omit(locationDF)
+nrow(locationDF)
 
-names(sample_data_Q) <- c("protected areas","forest","wetland/water bodies","meadows",
+names(locationDF)[-1] <- c("protected areas","forest","wetland/water bodies","meadows",
                           "agricultural land","green urban","non-green urban","remote areas")
 
 #rotated PCA
-pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRUE)
+pca_rotated <- principal(locationDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
@@ -293,22 +294,63 @@ plotPCA(pca_rotated)
 
 #### experience PCA ####
 
-sample_data_Q <- sample_data[,c("Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_","Wie_oft_haben_Sie_im_Fruhling_oder_Sommer_2020_Artdaten_gesammelt_",
+experienceDF <- sample_data[,c("ID","Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_","Wie_oft_haben_Sie_im_Fruhling_oder_Sommer_2020_Artdaten_gesammelt_",
                                 "Nehmen_Sie_an_einem_gross_angelegten_standardisierten_Monitoringsystem_teil_z_B_Tagfalter_Monitoring_Deutschland_",
                                 "Besitzen_Sie_Fachkenntnisse_im_Bereich_des_Biodiversitatsmonitorings_",
                                 "Sind_Sie_Mitglied_in_einer_Fachgesellschaft_fur_eine_bestimmte_Artengruppe_z_B_GdO_GAC_DDA_etc_")]
 
 #removed first part of the question to make it generic for all taxa
 
-sample_data_Q <- format4PCA(sample_data_Q)
+experienceDF <- format4PCA(experienceDF)
 
-names(sample_data_Q) <- c("nuYears","Frq","StandMonitor","Knowledge","Member")
+names(experienceDF)[-1] <- c("nuYears","Frq","StandMonitor","Knowledge","Member")
 
-sample_data_Q <- na.omit(sample_data_Q)
-nrow(sample_data_Q)
+experienceDF <- na.omit(experienceDF)
+nrow(experienceDF)
 
 #rotated PCA
-pca_rotated <- principal(sample_data_Q, rotate="varimax", nfactors=2, scores=TRUE)
+pca_rotated <- principal(experienceDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
+summary(pca_rotated)
+loadings(pca_rotated)
+plotPCA(pca_rotated)
+
+
+#### id uncertainty pca ####
+
+idDF <- sample_data[,c(1,grep("wenn_Sie_sich_bei_der_Bestimmung",names(sample_data)))]
+
+#removed first part of the question to make it generic for all taxa
+names(idDF) <- gsub("Was_tun_Sie_wenn_Sie_sich_bei_der_Bestimmung_einer_Art_unsicher_sind_Bitte_geben_Sie_an_wie_haufig_Sie_in_diesem_Fall_folgende_Dinge_tun_","",names(idDF))
+
+idDF <- format4PCA(idDF)
+
+names(idDF)[-1] <- c("guess","not report","report at higher taxa level",
+                          "ask another person","use an identification guide")
+
+idDF <- na.omit(idDF)
+nrow(idDF)
+
+#rotated PCA
+pca_rotated <- principal(idDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
+summary(pca_rotated)
+loadings(pca_rotated)
+plotPCA(pca_rotated)
+
+#### survey type ####
+
+surveytypeDF <- sample_data[,c(1,grep("Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben",names(sample_data)))]
+
+names(surveytypeDF) <- gsub("Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_","",names(surveytypeDF))
+
+surveytypeDF <- format4PCA(surveytypeDF)
+
+names(surveytypeDF)[-1] <- c("active search","opportunistic","using traps")
+
+surveytypeDF <- na.omit(surveytypeDF)
+nrow(surveytypeDF)
+
+#rotated PCA
+pca_rotated <- principal(surveytypeDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
