@@ -23,7 +23,6 @@ source('helper_functions.R', encoding = 'UTF-8')
 
 ##trial with cleaned-data (keeping variable name same here so as not to make multiple changes below)
 sample_data <- readRDS("cleaned-data/clean_data.RDS")
-sample_data$Taxa <- sample_data$Bitte.wahlen.Sie.EINE.Artengruppe..
 
 ### get taxa data frames ####
 
@@ -290,7 +289,6 @@ pca_rotated <- principal(locationDF[,-1], rotate="varimax", nfactors=2, scores=T
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
-
 
 #### experience PCA ####
 
