@@ -23,7 +23,8 @@ source('helper_functions.R', encoding = 'UTF-8')
 
 ##trial with cleaned-data (keeping variable name same here so as not to make multiple changes below)
 sample_data <- readRDS("cleaned-data/clean_data.RDS")
-sample_data$Taxa <- sample_data$Bitte.wahlen.Sie.EINE.Artengruppe..
+sample_data$Taxa <- sample_data$Bitte_wahlen_Sie_EINE_Artengruppe_ 
+
 
 ### get taxa data frames ####
 
@@ -45,29 +46,31 @@ frogsDF <- subset(sample_data,Taxa="Amphibien/Reptilien")
 
 ## make a common theme for plots
 theme_pca <- theme_classic()+
-  theme(plot.title = element_text(size = 20, color = "black"),
+  theme(plot.title = element_text(size = 15, color = "black"),
         axis.text.x = element_text(size = 10, face = "bold"),
         axis.text.y = element_text(size = 10, face = "bold"),
         panel.border = element_rect(colour = "black", fill=NA, size=0.8),
-        axis.title.x = element_text(size = 20, color = "black"),   
-        axis.title.y = element_text(size = 20, color = "black"))
+        axis.title.x = element_text(size = 15, color = "black"),   
+        axis.title.y = element_text(size = 15, color = "black"))
 
 
 doTaxaPCA <- function(sample_data){
   
   #q1
   sample_data_Q <- sample_data[,grepl("gegangen_sind_wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen",names(sample_data))]
+  sample_data_Q <- format4PCA(sample_data_Q)
   #removed first part of the question to make it generic for all taxa
-  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"_")[[1]][2])
   sample_data_Q <- na.omit(sample_data_Q)
   names(sample_data_Q) <- c("complete checklist","all species","interesting species","common species",
                             "rare species")
+  
   fit <-  prcomp(sample_data_Q, scale = TRUE)
   q1 <- fviz_pca_biplot(fit, 
                         # Fill individuals by groups
                         geom.ind = "point",
                         pointshape = 21,
-                        pointsize = 0.8,
+                        pointsize = 0.1,
                         fill.ind = "black",
                         col.ind = "black",
                         col.var = "#225ea8",
@@ -82,7 +85,8 @@ doTaxaPCA <- function(sample_data){
   
   #q2
   sample_data_Q <- sample_data[,grepl("Was_veranlasst_Sie_dazu",names(sample_data))]
-  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][3])
+  sample_data_Q <- format4PCA(sample_data_Q)
+  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"_")[[1]][3])
   sample_data_Q <- na.omit(sample_data_Q)
   names(sample_data_Q) <- c("rare species","many species at same time", "unexpected species",
                             "first time of year","unknown species","many indivdiduals at the same time",
@@ -93,7 +97,7 @@ doTaxaPCA <- function(sample_data){
                         # Fill individuals by groups
                         geom.ind = "point",
                         pointshape = 21,
-                        pointsize = 0.8,
+                        pointsize = 0.1,
                         fill.ind = "black",
                         col.ind = "black",
                         col.var = "#225ea8",
@@ -107,7 +111,8 @@ doTaxaPCA <- function(sample_data){
   )
   #q3
   sample_data_Q <- sample_data[,grepl("wenn_Sie_sich_bei_der_Bestimmung",names(sample_data))]
-  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+  sample_data_Q <- format4PCA(sample_data_Q)
+  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"_")[[1]][2])
   sample_data_Q <- na.omit(sample_data_Q)
   names(sample_data_Q) <- c("guess","not reported","report at higher taxa level",
                             "ask another person","use an identification guide")
@@ -116,7 +121,7 @@ doTaxaPCA <- function(sample_data){
   q3 <- fviz_pca_biplot(fit, 
                         # Fill individuals by groups
                         geom.ind = "point",
-                        pointsize = 0.8,
+                        pointsize = 0.1,
                         fill.ind = "black",
                         col.ind = "black",
                         col.var = "#225ea8",
@@ -131,7 +136,8 @@ doTaxaPCA <- function(sample_data){
   )
   #q4
   sample_data_Q <- sample_data[,grepl("wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten",names(sample_data))]
-  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"___")[[1]][2])
+  sample_data_Q <- format4PCA(sample_data_Q)
+  names(sample_data_Q) <- sapply(names(sample_data_Q),function(x)strsplit(x,"_")[[1]][2])
   sample_data_Q <- na.omit(sample_data_Q)
   names(sample_data_Q) <- c("protected areas","forest","wetland/water bodies","meadows",
                             "agricultural land","green urban","non-green urban","remote areas")
@@ -141,7 +147,7 @@ doTaxaPCA <- function(sample_data){
                         # Fill individuals by groups
                         geom.ind = "point",
                         pointshape = 21,
-                        pointsize = 0.8,
+                        pointsize = 0.1,
                         fill.ind = "black",
                         col.ind = "black",
                         col.var = "#225ea8",
@@ -166,7 +172,12 @@ b <- doTaxaPCA(insectDF)
 c <- doTaxaPCA(plantDF)
 d <- doTaxaPCA(frogsDF)
 
-### make a panel plot (4*4)
+### saving the plot
+
+bird_pca_plot <- ggsave(a, filename = "plots/bird_pca_plot.png",width = 13, height = 8, units = "in" )
+insect_pca_plot <- ggsave(b, filename = "plots/insect_pca_plot.png",width = 13, height = 8, units = "in" )
+plant_pca_plot <- ggsave(c, filename = "plots/plant_pca_plot.png",width = 13, height = 8, units = "in" )
+frog_pca_plot <- ggsave(d, filename = "plots/frog_pca_plot.png",width = 13, height = 8, units = "in" )
 
 #@DIANA how should I arrange the plots? 
 #below is just all plots in panel 
