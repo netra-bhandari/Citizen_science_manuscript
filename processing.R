@@ -17,16 +17,15 @@ survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
 #the following line Diana needed to do so that Netras script worked:
 names(survey_data) <- sapply(names(survey_data), function(x)gsub("\\.","_",x))
 
-### subset to people completing most of the survey ####
-
-survey_data <- survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
-colnames(survey_data)[1]<- "ID"
-#write.csv(data.frame(Questions=names(survey_data)),file="Survey_columns.csv",row.names = FALSE)
-
 #remove all German characters
 names(survey_data) <- sapply(names(survey_data),function(x)iconv(x, to='ASCII//TRANSLIT'))
 names(survey_data) <- gsub("\\?","ss",names(survey_data))
-names(survey_data) <- gsub("�","ss",names(survey_data))
+names(survey_data) <- gsub("ß","ss",names(survey_data))
+
+### subset to people completing most of the survey ####
+survey_data <- survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13)
+colnames(survey_data)[1]<- "ID"
+#write.csv(data.frame(Questions=names(survey_data)),file="Survey_columns.csv",row.names = FALSE)
 
 ### Main taxa-group function ######################################################
 
@@ -79,11 +78,11 @@ getTaxaData <- function(survey_data,myTaxa){
 
 ### get taxa data frames ####
 
-birdDF <- getTaxaData(survey_data,c("Vogel"))
+birdDF <- getTaxaData(survey_data,c("Vogel","Vögel"))
 plantDF <- getTaxaData(survey_data,c("Pflanzen","Planzen"))
 butterflyDF <- getTaxaData(survey_data,c("Schmetterlinge","Schmetterling","Schmetterlings","Schmetterlingen")) 
 dragonflyDF <- getTaxaData(survey_data,c("Libellen","Libelle"))
-beetleDF <- getTaxaData(survey_data,c("Kafer"))
+beetleDF <- getTaxaData(survey_data,c("Kafer","Käfer"))
 beeDF <- getTaxaData(survey_data,"Bienen")
 frogDF <- getTaxaData(survey_data,c("Amphibien/Reptilien","Amphibien_Reptilien","Amphibien___Reptilien"))
 
@@ -189,5 +188,62 @@ names(otherDF)[!names(otherDF) %in% names(taxaDF)]
 ### combine all ############
 
 allDF <- bind_rows(taxaDF,otherDF)
+nrow(allDF)
+
+#### cleaning effort columns ####
+
+#active search
+allDF$activeHrs <- allDF$Wenn_Sie_aktiv_auf_die_Suche_nach_gegangen_sind_wie_lange_suchten_Sie_typischerweise_in_Stunden_
+allDF$activeMins <- allDF$Wenn_Sie_aktiv_auf_die_Suche_nach_gegangen_sind_wie_lange_suchten_Sie_typischerweise_oder_in_Minuten_
+
+#convert to minutes
+allDF$activeMins[is.na(allDF$activeMins)] <- 60 * allDF$activeHrs[is.na(allDF$activeMins)]
+#some extreme outliers
+summary(allDF$activeMins)
+#anything more than 12 hours - assume to be a mistake
+allDF$activeMins[allDF$activeMins>60*12]<- NA
+
+#trap search
+allDF$trapDays <- allDF$Wenn_Sie_eine_Falle_verwendet_haben_wie_lang_war_typischerweise_das_Erfassungs_Zeitfenster_in_Tagen_
+allDF$trapHrs <- allDF$Wenn_Sie_eine_Falle_verwendet_haben_wie_lang_war_typischerweise_das_Erfassungs_Zeitfenster_oder_in_Stunden_
+
+#convert to minutes
+allDF$trapDays[is.na(allDF$trapDays)] <- 1/24 * allDF$trapHrs[is.na(allDF$trapDays)]
+
+#some extreme outliers
+summary(allDF$trapDays)
+
+#anything more than 30 days - assume to be a mistake
+allDF$trapDays[allDF$trapDays>30]<- NA
+
+#### Sonstige taxa ####
+
+allDF$Taxa <- allDF$Bitte_wahlen_Sie_EINE_Artengruppe_
+
+allDF$Others <- allDF$Bitte_wahlen_Sie_EINE_Artengruppe_Sonstiges_
+sort(unique(allDF$Others))
+
+allDF$Taxa[allDF$Others %in% c("Wildbienen","Wildbienen ")] <- "Bienen"
+
+allDF$Taxa[allDF$Others %in% c("Vögel")] <- "Vögel"
+
+allDF$Taxa[allDF$Others %in% c("Ameisen","Auchenorrhyncha","Diptera","Dipteren","Geradflügler","Heuschrecken","Hummeln","Neuropterida","Orthoptera","Pflanzenwespen","Pseudoskorpion","Schwebfliegen","spinnen","Spinnen","Spinnentiere","Stechimmen inkl. Bienen","Termiten","Wanzen","Zikaden")] <- "Insect group"
+
+allDF$Taxa[allDF$Others %in% c("Mollsuken-D","Mollusca","Mollusken","Rädertiere","Makrozoobenthos","Mollusken; Aquatische Wirbellose (Makrozoobenthos)","Schnecken","Wirbellose Süßwasserorganismen")] <- "Invertebrate group"
+
+allDF$Taxa[allDF$Others %in% c("alle Insekten","Alle Insekten, die ich fotografisch festhalten kann, 2020 oft Bienen","andere Insekten","andere Insekten ","Insekten","Insekten ","Insekten allgemein","Wanzen, sonstige Insekten")] <- "Insects"
+
+allDF$Taxa[allDF$Others %in% c("absteigend: Moose, Höhere Pflanzen, Libellen, Flechten, Pilze","Alle","Alle Arten von Spuren, Tracks, Fraßspuren...","alle genannten","alle natürlich","alles Kleinzeug","Alles was ich kenne!","alles was mich neugierig macht","Alles was mir vor die Kamera läuft und je nach Jahreszeit sich blicken lässt","Bioindikatoren  und Fische","Im Wasser lebende Tiere","lege mich da nicht fest","Meerestiere","Orchideen, Singnalkrebse, Rotmilan","Pflanzzen und Kryptogamen","Schmetterlinge, Käfer, Libellen, Amphinien","Tiere i.w.S.","Vögel, aber auch Schmetterlinge, Libellen, Bienen und Pflanzen ", "Zikaden, Säugetiere","Vögel, Heuschrecken, Libellen")] <- "Multiple"
+
+allDF$Taxa[allDF$Others %in% c("Algen","Biber","Eichhörnchen","Feldhamster","Fische","Flechten","Fleddermäuse","Fledermaus","Fledermäuse","Großkarnivoren","Großpilze","Kraniche ","Moose","Moose Flechten","Moose und Flechten","NAGETIERE","Pilze","Politiker","Säuger","Säugetier (Projekt Fledermaus)","Säugetiere","Säugetiere/Fledermäuse","Schalenwild")] <- "Other"
+
+table(allDF$Taxa)
+
+#### save #####
+
 saveRDS(allDF,file="cleaned-data/clean_data.RDS")
+
+
+
+
 
