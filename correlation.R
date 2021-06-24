@@ -86,7 +86,6 @@ ggraph(graph_cors) +
 #code from Maria - see script - 06.1_Fig_networks_circles.R
 library(igraph)
 library(corrr)
-library(igraph)
 library(ggraph)
 
 tidy_cors <- motivationsDF[,-1] %>% 
@@ -128,6 +127,9 @@ plot(routes_igraph,
 
 #### combining questions ####
 
+library(qgraph)
+library(igraph)
+
 #get the data frames in the pca script
 allDF <- surveytypeDF %>%
           full_join(.,activeDF,by="ID")%>%
@@ -152,8 +154,10 @@ myCols <- c(rep(myCols[1],ncol(surveytypeDF[,-1])),
             rep(myCols[6],ncol(experienceDF[,-1])))
 
 tidy_cors <- allDF[,-1] %>% 
-  correlate(method="spearman") %>% 
-  stretch()  
+  cor_auto() %>%
+  as.data.frame() %>%
+  mutate(term = names(allDF)[-1]) %>%
+  pivot_longer(!term,values_to="r")
 
 tidy_cors %>%
   filter(abs(r)>0.4) %>%
@@ -166,8 +170,9 @@ routes_igraph <- tidy_cors %>%
 #replace NAs witj lower number
 tidy_cors2 <- tidy_cors
 tidy_cors2[is.na(tidy_cors2)] <- 0.01
+tidy_cors2[tidy_cors2==1] <- 0.01
 #decide on colours
-tidy_cors2$Colour <- ifelse(abs(tidy_cors2$r)>0.25, gplots::col2hex("grey70"),"#FFFFFF00")
+tidy_cors2$Colour <- ifelse(abs(tidy_cors2$r)>0.3, gplots::col2hex("grey70"),"#FFFFFF00")
 table(tidy_cors2$Colour)
 tidy_cors2$r <- abs(tidy_cors2$r) 
 
