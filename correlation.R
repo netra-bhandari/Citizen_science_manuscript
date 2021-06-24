@@ -84,13 +84,23 @@ ggraph(graph_cors) +
 #### igraph #####
 #code from Maria - see script - 06.1_Fig_networks_circles.R
 library(igraph)
+library(corrr)
+library(igraph)
+library(ggraph)
 
-routes_igraph <- tidy_cors %>%
+tidy_cors <- motivationsDF %>% 
+  correlate() %>% 
+  stretch()  
+
+routes_igraph <- tidy_cors %>% 
   graph_from_data_frame(directed = FALSE)
 
+#sort attributes of network
+#replace NAs witj lower number
 tidy_cors2 <- tidy_cors
 tidy_cors2[is.na(tidy_cors2)] <- 0.01
-
+#decide on colours
+tidy_cors2$Colour<- ifelse(abs(tidy_cors2$r>0.4), gplots::col2hex("grey70"),"#FFFFFF00")
 
 # function to align the vertex labels nicely (from https://kieranhealy.org/blog/archives/2011/02/18/aligning-labels-in-circular-igraph-layouts/)
 radian.rescale <- function(x, start=0, direction=1) { #start = offset from 12 o'clock in radians; direction = 1 for clockwise; -1 for anti-clockwise.
@@ -98,11 +108,12 @@ radian.rescale <- function(x, start=0, direction=1) { #start = offset from 12 o'
   c.rotate(scales::rescale(x, c(0, 2 * pi), range(x)))
 }
 
-lab.locs <- radian.rescale(x=1:length(names(V(routes_igraph))), direction=-1, start=0) #start = offset from 12 o'clock in 
+lab.locs <- radian.rescale(x=1:length(names(V(routes_igraph))), 
+                           direction=-1, start=0) #start = offset from 12 o'clock in 
 
-plot1<- plot(routes_igraph, 
-            edge.arrow.size = 0.2, 
+plot(routes_igraph, 
             edge.curved = 0,
+            edge.color = tidy_cors2$Colour,
             edge.width = tidy_cors2$r*10,
             vertex.color= "red", 
             vertex.label.dist = 2.5,
