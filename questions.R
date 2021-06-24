@@ -14,8 +14,9 @@ survey_data <- readRDS("cleaned-data/clean_data.RDS")
 # motivations PCA axis 1 and 2 (Diana to sort)
 
 # age group: chisq.test(df$Taxa, df$Age-group)
-
-
+chisq.test(survey_data$Bitte_wahlen_Sie_EINE_Artengruppe_,
+           survey_data$Zu_welcher_Altersklasse_gehoren_Sie_)
+## X-squared = 45.287, df = 40, p-value = 0.2609
 
 # number of years of experience: glm(nuYears ~ Taxon-group, data=df, family=Poisson)
 shapiro.test(survey_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_) #normal
@@ -43,6 +44,8 @@ summary(glm(Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtung
 
 # species preferences
 # hist(score1) # check normality!!
+
+
 
 lm(score1 ~ Taxon_group, data=df)
 lm(score2 ~ Taxon_group, data=df)
