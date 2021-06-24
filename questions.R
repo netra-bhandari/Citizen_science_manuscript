@@ -14,9 +14,12 @@ survey_data <- readRDS("cleaned-data/clean_data.RDS")
 # motivations PCA axis 1 and 2 (Diana to sort)
 
 # age group: chisq.test(df$Taxa, df$Age-group)
+
+survey_data$Bitte_wahlen_Sie_EINE_Artengruppe_[survey_data$Bitte_wahlen_Sie_EINE_Artengruppe_ %in% c("Bienen","Käfer","Libellen","Schmetterlinge")] <- "Insects"
+
 chisq.test(survey_data$Bitte_wahlen_Sie_EINE_Artengruppe_,
            survey_data$Zu_welcher_Altersklasse_gehoren_Sie_)
-## X-squared = 45.287, df = 40, p-value = 0.2609  (NS)
+## X-squared = 26.881, df = 24, p-value = 0.3101 (NS)
 
 # number of years of experience: glm(nuYears ~ Taxon-group, data=df, family=Poisson)
 shapiro.test(survey_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_) #normal
@@ -25,15 +28,15 @@ summary(glm(Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtung
     data = survey_data, family = poisson))
 
 ## summary of glm 
-## bienen  -0.66 NS
-## libellen -0.025 NS
 ## Pfalnzen 0.078 S
-## Schmetterlinge -0.03 NS
+## Insects   -0.11011 S
 ## Sonstiges -0.056 NS
 
 
 # frequency of data collection: clm(frq ~ Taxon_group, data=df)
 ##as.ordered.factor
+
+
 
 # types of survey
 # active/planned  clm(Likert.scale ~ Taxon_group, data=df)
@@ -44,7 +47,6 @@ summary(glm(Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtung
 
 # species preferences
 # hist(score1) # check normality!!
-
 
 
 lm(score1 ~ Taxon_group, data=df)
