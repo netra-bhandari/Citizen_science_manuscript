@@ -36,6 +36,9 @@ summary(glm(Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtung
 # frequency of data collection: clm(frq ~ Taxon_group, data=df)
 ##as.ordered.factor
 
+summary(clm(as.ordered(Wie_oft_haben_Sie_im_Fruhling_oder_Sommer_2020_Artdaten_gesammelt_)~ Bitte_wahlen_Sie_EINE_Artengruppe_,
+    data = survey_data))
+
 
 
 # types of survey
