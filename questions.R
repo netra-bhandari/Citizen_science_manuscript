@@ -48,10 +48,27 @@ summary(clm(as.ordered(Wie_oft_haben_Sie_im_Fruhling_oder_Sommer_2020_Artdaten_g
 
 # types of survey
 # active/planned  clm(Likert.scale ~ Taxon_group, data=df)
-# opportunistics  clm(Likert.scale ~ Taxon_group, data=df)
+# opportunistic  clm(Likert.scale ~ Taxon_group, data=df)
 # trap  clm(Likert.scale ~ Taxon_group, data=df)
 
 ##as.ordered.factor
+summary(clm(as.ordered(Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_oder_zufallige_Beobachtungen_ohne_aktive_Suche_) ~ Bitte_wahlen_Sie_EINE_Artengruppe_,
+                   data = survey_data))
+
+summary(clm(as.ordered(Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_das_Resultat_einer_aktiven_Suche_Sie_sind_zum_Beispiel_an_einen_bestimmten_Ort_gefahren_um_gezielt_nach_Arten_zu_suchen_)~
+            Bitte_wahlen_Sie_EINE_Artengruppe_,
+            data = survey_data))
+                         
+summary(clm(as.ordered(Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_oder_aus_aufgestellten_Fallen_) ~ Bitte_wahlen_Sie_EINE_Artengruppe_,
+            data = survey_data))
+
+
+## summary for types of survey 
+##   Taxa           Active/planned          Opportunistic             Trap
+##  Insects         -0.4401 (S)               0.2581 (NS)             0.6702(S)
+##  Plants          -1.1864 (S)               1.0003(S)               1.4919 (S)
+##  Sonstiges       -0.8401 (S)               0.5320 (S)              1.0277 (S)
+
 
 # species preferences
 # hist(score1) # check normality!!
