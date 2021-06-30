@@ -7,7 +7,6 @@ source('helper_functions.R', encoding = 'UTF-8')
 ### read in a cleaned data frame ###
 
 sample_data <- readRDS("cleaned-data/clean_data.RDS")
-sample_data$Taxa <- sample_data$Bitte_wahlen_Sie_EINE_Artengruppe_
 
 ### active search length ####
 
@@ -64,7 +63,14 @@ unique(sample_data$trapTypes[sample_data$Taxa=="Sonstiges"])
 
 #### taxa specialism ####
 
-sample_data$Specialism <- sample_data$Erfassen_Sie_vorrangig_Beobachtungsdaten_uber_eine_bestimmte_Untergruppe__z_B__eine_Familie__innerhalb_dieser_Artengruppe_
+sample_data$Specialism <- sample_data$Erfassen_Sie_vorrangig_Beobachtungsdaten_uber_eine_bestimmte_Untergruppe_z_B_eine_Familie_innerhalb_dieser_Artengruppe_
+
+sample_data$Specialism_group <-
+sample_data$Falls_Ja_Bitte_spezifizieren_Sie_die_Untergruppe_uber_die_Sie_vorrangig_Beobachtungsdaten_erfassen_
 
 table(sample_data$Specialism)
+table(sample_data$Specialism,sample_data$Taxa)
+
+#which people are specialised
+unique(sample_data$Specialism_group[sample_data$Taxa=="Vögel"])
 
