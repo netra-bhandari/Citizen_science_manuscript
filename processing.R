@@ -201,7 +201,7 @@ allDF$activeMins[is.na(allDF$activeMins)] <- 60 * allDF$activeHrs[is.na(allDF$ac
 #some extreme outliers
 summary(allDF$activeMins)
 #anything more than 12 hours - assume to be a mistake
-allDF$activeMins[allDF$activeMins>60*12]<- NA
+allDF$activeMins[allDF$activeMins>60*8]<- NA
 
 #trap search
 allDF$trapDays <- allDF$Wenn_Sie_eine_Falle_verwendet_haben_wie_lang_war_typischerweise_das_Erfassungs_Zeitfenster_in_Tagen_
@@ -227,11 +227,16 @@ allDF$Taxa[allDF$Others %in% c("Wildbienen","Wildbienen ")] <- "Bienen"
 
 allDF$Taxa[allDF$Others %in% c("Vögel")] <- "Vögel"
 
-allDF$Taxa[allDF$Others %in% c("Ameisen","Auchenorrhyncha","Diptera","Dipteren","Geradflügler","Heuschrecken","Hummeln","Neuropterida","Orthoptera","Pflanzenwespen","Pseudoskorpion","Schwebfliegen","spinnen","Spinnen","Spinnentiere","Stechimmen inkl. Bienen","Termiten","Wanzen","Zikaden")] <- "Insect group"
 
-allDF$Taxa[allDF$Others %in% c("Mollsuken-D","Mollusca","Mollusken","Rädertiere","Makrozoobenthos","Mollusken; Aquatische Wirbellose (Makrozoobenthos)","Schnecken","Wirbellose Süßwasserorganismen")] <- "Invertebrate group"
+allDF$Taxa[allDF$Others %in% c("spinnen","Spinnen","Spinnentiere")] <- "Other"#only 4
 
-allDF$Taxa[allDF$Others %in% c("alle Insekten","Alle Insekten, die ich fotografisch festhalten kann, 2020 oft Bienen","andere Insekten","andere Insekten ","Insekten","Insekten ","Insekten allgemein","Wanzen, sonstige Insekten")] <- "Insects"
+allDF$Taxa[allDF$Others %in% c("Geradflügler","Heuschrecken","Orthoptera")] <- "Other"#only 5
+
+allDF$Taxa[allDF$Others %in% c("Ameisen","Auchenorrhyncha","Diptera","Dipteren","Hummeln","Neuropterida","Pflanzenwespen","Pseudoskorpion","Schwebfliegen","Stechimmen inkl. Bienen","Termiten","Wanzen","Zikaden")] <- "Other"
+
+allDF$Taxa[allDF$Others %in% c("Mollsuken-D","Mollusca","Mollusken","Rädertiere","Makrozoobenthos","Mollusken; Aquatische Wirbellose (Makrozoobenthos)","Schnecken","Wirbellose Süßwasserorganismen")] <- "Other"
+
+allDF$Taxa[allDF$Others %in% c("alle Insekten","Alle Insekten, die ich fotografisch festhalten kann, 2020 oft Bienen","andere Insekten","andere Insekten ","Insekten","Insekten ","Insekten allgemein","Wanzen, sonstige Insekten")] <- "Multiple"
 
 allDF$Taxa[allDF$Others %in% c("absteigend: Moose, Höhere Pflanzen, Libellen, Flechten, Pilze","Alle","Alle Arten von Spuren, Tracks, Fraßspuren...","alle genannten","alle natürlich","alles Kleinzeug","Alles was ich kenne!","alles was mich neugierig macht","Alles was mir vor die Kamera läuft und je nach Jahreszeit sich blicken lässt","Bioindikatoren  und Fische","Im Wasser lebende Tiere","lege mich da nicht fest","Meerestiere","Orchideen, Singnalkrebse, Rotmilan","Pflanzzen und Kryptogamen","Schmetterlinge, Käfer, Libellen, Amphinien","Tiere i.w.S.","Vögel, aber auch Schmetterlinge, Libellen, Bienen und Pflanzen ", "Zikaden, Säugetiere","Vögel, Heuschrecken, Libellen")] <- "Multiple"
 
