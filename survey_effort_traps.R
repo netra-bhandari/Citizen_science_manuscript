@@ -1,4 +1,7 @@
 library(tidyverse)
+library(ggridges)
+library(ggthemes)
+
 source('helper_functions.R', encoding = 'UTF-8')
 
 ### read in a cleaned data frame ###
@@ -19,6 +22,13 @@ subset(sample_data,!is.na(activeHrs) & !is.na(activeMins))
 ggplot(sample_data)+
   geom_histogram((aes(activeMins)),bins=5)+
   facet_wrap(~Taxa)
+
+ggplot(subset(sample_data,!is.na(activeMins)))+
+  geom_density_ridges(aes(y=Taxa, x=activeMins, fill=Taxa))+
+  scale_fill_brewer(type="qual")+
+  theme_few()+
+  theme(legend.position="none")
+  
 
 sample_data %>%
   dplyr::group_by(Taxa) %>%
@@ -48,6 +58,7 @@ sample_data$trapTypes <- sample_data$Welche_Typen_von_Fallen_verwenden_Sie_Bitte
 
 unique(sample_data$trapTypes[sample_data$Taxa=="Schmetterlinge"])
 unique(sample_data$trapTypes[sample_data$Taxa=="Amphibien/Reptilien"])
+unique(sample_data$trapTypes[sample_data$Taxa=="Käfer"])
 unique(sample_data$trapTypes[sample_data$Taxa=="Sonstiges"])
 
 

@@ -1,4 +1,6 @@
 #Diana just playing with some visualization options
+#https://www.statmethods.net/stats/correlations.html
+
 library(tidyverse)
 library(wesanderson)
 
@@ -153,6 +155,11 @@ myCols <- c(rep(myCols[1],ncol(surveytypeDF[,-1])),
             rep(myCols[5],ncol(locationDF[,-1])),
             rep(myCols[6],ncol(experienceDF[,-1])))
 
+#restrict to bird people
+IDs <- readRDS("ID_to_Taxa.rds")
+allDF <- filter(allDF, ID %in% IDs$ID[IDs$Taxa=="Vögel"])
+allDF <- select(allDF, -"using traps")
+
 tidy_cors <- allDF[,-1] %>% 
   cor_auto() %>%
   as.data.frame() %>%
@@ -171,8 +178,12 @@ routes_igraph <- tidy_cors %>%
 tidy_cors2 <- tidy_cors
 tidy_cors2[is.na(tidy_cors2)] <- 0.01
 tidy_cors2[tidy_cors2==1] <- 0.01
+summary(tidy_cors2$r)
 #decide on colours
-tidy_cors2$Colour <- ifelse(abs(tidy_cors2$r)>0.3, gplots::col2hex("grey70"),"#FFFFFF00")
+#stidy_cors2$Colour <- ifelse(abs(tidy_cors2$r)>0.6, gplots::col2hex("grey70"),"#FFFFFF00")
+tidy_cors2$Colour <- "#FFFFFF00"
+tidy_cors2$Colour[tidy_cors2$r > 0.4] <- gplots::col2hex("grey70")
+tidy_cors2$Colour[tidy_cors2$r<(-0.4)] <-  gplots::col2hex("grey30")#darker
 table(tidy_cors2$Colour)
 tidy_cors2$r <- abs(tidy_cors2$r) 
 
