@@ -80,9 +80,32 @@ colnames(survey_data) <- gsub("Vogel","Vögel", colnames(survey_data))
 #people who completed the survey
 completed <-  survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13) #900
 
+#stats on people who attempted the survey 
+tally_people <- data.frame(Letzte_Seite = survey_data$Letzte_Seite) 
+
+tally_people$Letzte_Seite <- as.factor(tally_people$Letzte_Seite)
+tally_people <- tally_people %>% group_by(Letzte_Seite) %>% tally() 
+tally_people <- tally_people %>%  mutate(prop = n/1645*100)
+(tally_plot <- ggplot(tally_people, aes(x= Letzte_Seite, y = prop)) + 
+              geom_bar(stat = "identity", fill ="#78B7C5",colour = "black")+
+              xlab("Last Page")+
+              ylab("Percentage(%)")+ 
+              theme_classic()+
+              coord_flip()+
+              ylim(0,75)+
+              theme(axis.text = element_text(size = 15,color = "black"),                          
+                          axis.title.x = element_text(size = 15, face = "plain"),
+                          axis.title.y = element_text(size = 15), 
+                          panel.grid = element_blank(),
+                          panel.border = element_rect(color = "black", fill = NA))) 
+
+ggsave(tally_plot, filename = "plots/tally_plot.png")
+
 
 #use completed variable as the new survey_data
 survey_data <- completed
+
+
 ```
 
 
