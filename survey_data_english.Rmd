@@ -283,7 +283,7 @@ groups$Group <-   str_replace_all(groups$Group,
                                     "Käfer" = "Beetles",
                                     "Libellen" = "Dragonflies",
                                     "Pflanzen" = "Plants",
-                                    "Schmetterlinge" = "Butterflies",
+                                    "Schmetterlinge" = "Butterflies/Moths",
                                     "Sonstiges" = "Others",
                                     "Vögel" = "Birds"))
 
@@ -335,7 +335,7 @@ new_groups$group <-   str_replace_all(new_groups$group,
                                         "Käfer" = "Beetles",
                                         "Libellen" = "Dragonflies",
                                         "Pflanzen" = "Plants",
-                                        "Schmetterlinge" = "Butterflies",
+                                        "Schmetterlinge" = "Butterflies/Moths",
                                         "Sonstiges" = "Others",
                                         "Vögel" = "Birds"))
 
