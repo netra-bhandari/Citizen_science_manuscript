@@ -1882,6 +1882,7 @@ library(viridis)
              col = "#225ea8", shape = 16, alpha = 0.8) +
       coord_map() +
       theme_map() +
+      scale_size_continuous(range = c(5,9))+
       theme(legend.position = "right",
             legend.title=element_text(size=30, color = "black"), 
             legend.text=element_text(size=28, color = "black"),
