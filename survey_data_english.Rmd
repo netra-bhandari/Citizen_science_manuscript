@@ -123,6 +123,7 @@ colnames(experience) <- "years_of_experience"
 experience <- drop_na(experience)
 
 median(experience$years_of_experience) #11
+IQR(experience$years_of_experience) #26
 
 (experience_plot <- ggplot(experience, aes(x = years_of_experience)) +                
                           geom_histogram(binwidth = 3, colour = "black", fill = "#CD8500") +    
