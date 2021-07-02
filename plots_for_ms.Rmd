@@ -32,7 +32,7 @@ library(grid)
       
       ncol = 2 )) 
 
-panel_a<- grid.arrange(panel_a,map+ggtitle("(c)") + ylab("") + xlab("") +
+panel_a <- grid.arrange(panel_a, map + ggtitle("(c)") + ylab("") + xlab("") +
       theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), units = , "cm"),
             plot.title.position = "plot",
             plot.title = element_text(size = 30)))
