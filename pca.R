@@ -23,7 +23,6 @@ source('helper_functions.R', encoding = 'UTF-8')
 
 ##trial with cleaned-data (keeping variable name same here so as not to make multiple changes below)
 sample_data <- readRDS("cleaned-data/clean_data.RDS")
-sample_data$Taxa <- sample_data$Bitte_wahlen_Sie_EINE_Artengruppe_ 
 #saveRDS(sample_data[,c("ID","Taxa")],file="ID_to_Taxa.rds")
 
 ### get taxa data frames ####
