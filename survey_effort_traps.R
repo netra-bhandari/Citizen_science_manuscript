@@ -22,9 +22,23 @@ ggplot(sample_data)+
   geom_histogram((aes(activeMins)),bins=5)+
   facet_wrap(~Taxa)
 
+#replacing german names with english
+
+sample_data$Taxa <-   str_replace_all(sample_data$Taxa,
+                                         c("Amphibien/Reptilien" = "Amphibians/Reptiles",
+                                           "Bienen" = "Bees",
+                                           "Käfer" = "Beetles",
+                                           "Libellen" = "Dragonflies",
+                                           "Pflanzen" = "Plants",
+                                           "Schmetterlinge" = "Butterflies/Moths",
+                                           "Sonstiges" = "Others",
+                                           "Vögel" = "Birds") )
+
+
+
 ggplot(subset(sample_data,!is.na(activeMins)))+
   geom_density_ridges(aes(y=Taxa, x=activeMins, fill=Taxa))+
-  scale_fill_brewer(type="qual")+
+  scale_fill_brewer(type="qual", palette="Set3")+ #changed pallete from "Accent" to "Set 3" to add the 9th color in the plot
   theme_few()+
   theme(legend.position="none")
   
