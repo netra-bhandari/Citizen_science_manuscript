@@ -431,7 +431,6 @@ biplot(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
-
 #loadings on each of the dominant axes
 # axis 1 - membership vs opportunistic data
 # axis 2 = frq/protected areas  
