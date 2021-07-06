@@ -214,7 +214,12 @@ names(motivationsDF)[-1] <- c("improve species knowledge",
 #rotated PCA
 pca_rotated <- principal(motivationsDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
+loadings(pca_rotated)
 plotPCA(pca_rotated)
+
+#identify variable loading strongly on each axis - of most interest given the top two
+#axis 1 = spend time outdoors
+#axis 2 = support conservation
 
 #save scores and person ID
 #motivationsDF$scores1 <- pca_rotated$scores[,1]
@@ -240,6 +245,10 @@ summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
+#identify variable loading most strongly on each axis
+#axis 1 = interesting species
+#axis 2 = common species
+
 ### incidental PCA ####
 
 incidentalDF <- sample_data[,c(1,grep("Was_veranlasst_Sie_dazu",names(sample_data)))]
@@ -259,6 +268,10 @@ pca_rotated <- principal(incidentalDF[,-1], rotate="varimax", nfactors=2, scores
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
+
+#identify variable loading most strongly on each axis
+#axis 1 = interesting species
+#axis 2 = many indivdiduals at the same time
 
 #### trap PCA ####
 
@@ -280,6 +293,10 @@ summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
+#identify variable loading most strongly on each axis
+#axis 1 = rare species
+#axis 2 = all species
+
 #### location PCA ####
 
 locationDF <- sample_data[,c(1,grep("wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten",names(sample_data)))]
@@ -300,6 +317,10 @@ pca_rotated <- principal(locationDF[,-1], rotate="varimax", nfactors=2, scores=T
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
+
+#identify variable loading most strongly on each axis
+#axis 1 = protected areas
+#axis 2 = non-green urban
 
 #### experience PCA ####
 
@@ -323,6 +344,9 @@ summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
+#identify variable loading most strongly on each axis
+#axis 1 = Member
+#axis 2 = Frq
 
 #### id uncertainty pca ####
 
@@ -345,6 +369,10 @@ summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
+#identify variable loading most strongly on each axis
+#axis 1 = use an identification guide
+#axis 2 = not report
+
 #### survey type ####
 
 surveytypeDF <- sample_data[,c(1,grep("Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben",names(sample_data)))]
@@ -363,5 +391,9 @@ pca_rotated <- principal(surveytypeDF[,-1], rotate="varimax", nfactors=2, scores
 summary(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
+
+#identify variable loading most strongly on each axis
+#axis 1 = opportunistic
+#axis 2 = using traps
 
 #### end ####
