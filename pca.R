@@ -408,6 +408,7 @@ PCA_survey <- surveytypeDF[,c("ID","opportunistic","using traps")]
 #### top two analysis ####
 
 #combine the top two from previous question groups
+#identify main axes of variation
 
 allpcaDF <- PCA_survey %>%
   full_join(.,PCA_active,by="ID")%>%
@@ -426,8 +427,14 @@ allpcaDF <- na.omit(allpcaDF)
 #pca analysis
 pca_rotated <- principal(allpcaDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
+biplot(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
+
+
+#loadings on each of the dominant axes
+# axis 1 - membership vs opportunistic data
+# axis 2 = frq/protected areas  
 
 #### cluster analysis ####
 
@@ -458,18 +465,40 @@ rect.hclust(fit, k=5, border="red")
 
 #get mean of each cluster - standardized
 mydata$groups <- as.numeric(groups)
-centre <- function(x) (x - mean(x)/sd(x))
+centre <- function(x) (x - median(x))
 
+#plot means
 groupSummary <- mydata %>%
   mutate(across(!"groups",centre)) %>%
   group_by(groups) %>%
-  summarise(across(everything(),mean)) %>%
+  summarise(across(everything(),median)) %>%
   pivot_longer(!groups,names_to = "behaviour", values_to = "mean")
 
 ggplot(groupSummary)+
-  geom_point(aes(x=behaviour,y=mean))+
+  geom_point(aes(x=behaviour,y=mean,color=factor(groups)),
+             size=2,alpha=0.5,
+             position = position_dodge(width = 0.3))+
   coord_flip()+
   geom_hline(yintercept=0)+
-  facet_wrap(~groups,ncol=2)
+  theme_few()
+
+#boxplots
+groupSummary <- mydata %>%
+  mutate(across(!"groups",centre)) %>%
+  pivot_longer(!groups,names_to = "behaviour", values_to = "mean")
+
+ggplot(groupSummary)+
+  geom_boxplot(aes(x=behaviour,y=mean))+
+  coord_flip()+
+  geom_hline(yintercept=0)+
+  theme_few()+
+  facet_wrap(~groups,ncol=5)
+
+ggplot(groupSummary)+
+  geom_boxplot(aes(x=factor(groups),y=mean))+
+  coord_flip()+
+  geom_hline(yintercept=0)+
+  theme_few()+
+  facet_wrap(~behaviour,ncol=5)
 
 #### end ####
