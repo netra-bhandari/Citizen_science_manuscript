@@ -220,6 +220,7 @@ plotPCA(pca_rotated)
 #identify variable loading strongly on each axis - of most interest given the top two
 #axis 1 = spend time outdoors
 #axis 2 = support conservation
+PCA_motivations <- motivationsDF[,c("ID","spend time outdoors","support conservation")]
 
 #save scores and person ID
 #motivationsDF$scores1 <- pca_rotated$scores[,1]
@@ -248,6 +249,8 @@ plotPCA(pca_rotated)
 #identify variable loading most strongly on each axis
 #axis 1 = interesting species
 #axis 2 = common species
+PCA_active <- activeDF[,c("ID","interesting species","common species")]
+
 
 ### incidental PCA ####
 
@@ -262,7 +265,7 @@ incidentalDF <- na.omit(incidentalDF)
 
 names(incidentalDF)[-1] <- c("rare species","many species at same time", "unexpected species",
                           "first time of year","unknown species","many indivdiduals at the same time",
-                          "interesing species")
+                          "interesting species")
 #rotated PCA
 pca_rotated <- principal(incidentalDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
@@ -272,6 +275,7 @@ plotPCA(pca_rotated)
 #identify variable loading most strongly on each axis
 #axis 1 = interesting species
 #axis 2 = many indivdiduals at the same time
+PCA_incidental <- incidentalDF[,c("ID","interesting species","many indivdiduals at the same time")]
 
 #### trap PCA ####
 
@@ -321,6 +325,8 @@ plotPCA(pca_rotated)
 #identify variable loading most strongly on each axis
 #axis 1 = protected areas
 #axis 2 = non-green urban
+PCA_location <- locationDF[,c("ID","protected areas","non-green urban")]
+
 
 #### experience PCA ####
 
@@ -347,6 +353,7 @@ plotPCA(pca_rotated)
 #identify variable loading most strongly on each axis
 #axis 1 = Member
 #axis 2 = Frq
+PCA_experience <- experienceDF[,c("ID","Member","Frq")]
 
 #### id uncertainty pca ####
 
@@ -372,6 +379,7 @@ plotPCA(pca_rotated)
 #identify variable loading most strongly on each axis
 #axis 1 = use an identification guide
 #axis 2 = not report
+PCA_id <- idDF[,c("ID","use an identification guide","not report")]
 
 #### survey type ####
 
@@ -395,5 +403,73 @@ plotPCA(pca_rotated)
 #identify variable loading most strongly on each axis
 #axis 1 = opportunistic
 #axis 2 = using traps
+PCA_survey <- surveytypeDF[,c("ID","opportunistic","using traps")]
+
+#### top two analysis ####
+
+#combine the top two from previous question groups
+
+allpcaDF <- PCA_survey %>%
+  full_join(.,PCA_active,by="ID")%>%
+  full_join(.,PCA_incidental,by="ID")%>%
+  full_join(.,PCA_motivations,by="ID")%>%
+  full_join(.,PCA_location,by="ID")%>%
+  full_join(.,PCA_experience,by="ID")%>%
+  full_join(.,PCA_id,by="ID")%>%
+  janitor::clean_names(.)
+
+
+#check which columns have NAs
+apply(allpcaDF,2,function(x)sum(is.na(x)))
+allpcaDF <- na.omit(allpcaDF)
+
+#pca analysis
+pca_rotated <- principal(allpcaDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
+summary(pca_rotated)
+loadings(pca_rotated)
+plotPCA(pca_rotated)
+
+#### cluster analysis ####
+
+mydata <- allpcaDF[,-1]
+
+# K-Means Cluster Analysis
+
+wss <- (nrow(mydata)-1)*sum(apply(mydata,2,var))
+for (i in 2:10) wss[i] <- sum(kmeans(mydata,
+                                     centers=i)$withinss)
+plot(1:10, wss, type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares")
+
+fit <- kmeans(mydata, 6) 
+# get cluster means
+aggregate(mydata,by=list(fit$cluster),FUN=mean)
+# append cluster assignment
+mydata <- data.frame(mydata, fit$cluster) 
+
+# Ward Hierarchical Clustering
+
+d <- dist(mydata, method = "euclidean") # distance matrix
+fit <- hclust(d, method="ward")
+plot(fit) # display dendogram
+groups <- cutree(fit, k=5) # cut tree into 5 clusters
+# draw dendogram with red borders around the 5 clusters
+rect.hclust(fit, k=5, border="red") 
+
+#get mean of each cluster - standardized
+mydata$groups <- as.numeric(groups)
+centre <- function(x) (x - mean(x)/sd(x))
+
+groupSummary <- mydata %>%
+  mutate(across(!"groups",centre)) %>%
+  group_by(groups) %>%
+  summarise(across(everything(),mean)) %>%
+  pivot_longer(!groups,names_to = "behaviour", values_to = "mean")
+
+ggplot(groupSummary)+
+  geom_point(aes(x=behaviour,y=mean))+
+  coord_flip()+
+  geom_hline(yintercept=0)+
+  facet_wrap(~groups,ncol=2)
 
 #### end ####
