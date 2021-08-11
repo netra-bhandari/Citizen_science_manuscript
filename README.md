@@ -10,3 +10,4 @@ In this folder the main scripts are -
 3. processing.R - a script to clean the raw data and align the different taxa questions in the same columns (work in progress)
 4. pca.R - PCA analysis for selected focal taxa (work in progress)
 5. questions.R - a script to run the models that test the specific questions (work in progress)
+6. correlations.R - a script to explore pair-wise correlations
