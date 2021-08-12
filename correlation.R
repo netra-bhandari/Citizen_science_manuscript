@@ -215,28 +215,7 @@ legend(-1.5,1.55,
        ncol=3)
 
 
-#### cross tabulations ####
 
-sample_data$Active_search <- sample_data$Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_das_Resultat_einer_aktiven_Suche_Sie_sind_zum_Beispiel_an_einen_bestimmten_Ort_gefahren_um_gezielt_nach_Arten_zu_suchen_
-      
-sample_data$Incidental_search <- sample_data$Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_oder_zufallige_Beobachtungen_ohne_aktive_Suche_
-
-table(sample_data$Active_search,sample_data$Incidental_search)
-
-surveytype_df <- sample_data %>%
-  select(ID,Active_search,Incidental_search) %>%
-  group_by(Active_search,Incidental_search) %>%
-  summarise(nu_Respondents = length(unique(ID)))
-
-surveytype_df$Active_search <- factor(surveytype_df$Active_search, 
-                                      levels=c("keine","wenige","einige","die meisten","alle"))
-
-surveytype_df$Incidental_search <- factor(surveytype_df$Incidental_search, 
-                                      levels=c("keine","wenige","einige","die meisten","alle"))
-
-ggplot(surveytype_df)+
-  geom_tile(aes(x=Active_search,y=Incidental_search,fill=nu_Respondents/899))+
-  scale_fill_viridis_c("% Respondents")
 
 #### end ####
 
