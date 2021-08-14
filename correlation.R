@@ -156,12 +156,12 @@ myCols <- c(rep(myCols[1],ncol(surveytypeDF[,-1])),
             rep(myCols[6],ncol(experienceDF[,-1])))
 
 #restrict to bird people
-IDs <- readRDS("ID_to_Taxa.rds")
-allDF <- filter(allDF, ID %in% IDs$ID[IDs$Taxa=="Vögel"])
-allDF <- select(allDF, -"using traps")
+#IDs <- readRDS("ID_to_Taxa.rds")
+#allDF <- filter(allDF, ID %in% IDs$ID[IDs$Taxa=="Vögel"])
+#allDF <- select(allDF, -"using traps")
 
 tidy_cors <- allDF[,-1] %>% 
-  cor_auto() %>%
+  cor_auto() %>% #uses the correct correlation
   as.data.frame() %>%
   mutate(term = names(allDF)[-1]) %>%
   pivot_longer(!term,values_to="r")
