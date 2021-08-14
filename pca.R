@@ -25,7 +25,8 @@ source('helper_functions.R', encoding = 'UTF-8')
 sample_data <- readRDS("cleaned-data/clean_data.RDS")
 #saveRDS(sample_data[,c("ID","Taxa")],file="ID_to_Taxa.rds")
 
-### get taxa data frames ####
+### taxa analysis ####
+#### get taxa data frames ####
 
 unique(sample_data$Taxa)
 
@@ -41,7 +42,7 @@ insectDF <- subset(sample_data,Taxa %in% c("Libellen","Schmetterlinge","Käfer",
 #get amphibians
 frogsDF <- subset(sample_data,Taxa="Amphibien/Reptilien")
 
-### taxa pca per question ####
+#### taxa pca per question ####
 
 ## make a common theme for plots
 theme_pca <- theme_classic()+
@@ -188,7 +189,9 @@ frog_pca_plot <- ggsave(d, filename = "plots/frog_pca_plot.png",width = 13, heig
 #pca_panel <- cowplot::plot_grid(plotlist = plist, ncol = 2)
 #ggsave("pca_panel.png", filename = pca_panel)
 
-### motivations PCA ####
+### across all species ####
+
+#### motivations PCA ####
 
 motivationsDF <- sample_data[,c(1,grep("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte",
                                     names(sample_data)))]
@@ -215,9 +218,9 @@ names(motivationsDF)[-1] <- c("improve species knowledge",
 pca_rotated <- principal(motivationsDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+p1 <- plotPCA(pca_rotated)
 
-#identify variable loading strongly on each axis - of most interest given the top two
+p1#identify variable loading strongly on each axis - of most interest given the top two
 #axis 1 = spend time outdoors
 #axis 2 = support conservation
 PCA_motivations <- motivationsDF[,c("ID","spend time outdoors","support conservation")]
@@ -244,15 +247,15 @@ names(activeDF)[-1] <- c("complete checklist","all species","interesting species
 pca_rotated <- principal(activeDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+p2 <- plotPCA(pca_rotated)
 
 #identify variable loading most strongly on each axis
 #axis 1 = interesting species
 #axis 2 = common species
-PCA_active <- activeDF[,c("ID","interesting species","common species")]
+PCA_active <- activeDF[,c("ID","all species","common species")]
 
 
-### incidental PCA ####
+#### incidental PCA ####
 
 incidentalDF <- sample_data[,c(1,grep("Was_veranlasst_Sie_dazu",names(sample_data)))]
 #removed first part of the question to make it generic for all taxa
@@ -270,12 +273,12 @@ names(incidentalDF)[-1] <- c("rare species","many species at same time", "unexpe
 pca_rotated <- principal(incidentalDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+p3 <- plotPCA(pca_rotated)
 
 #identify variable loading most strongly on each axis
 #axis 1 = interesting species
 #axis 2 = many indivdiduals at the same time
-PCA_incidental <- incidentalDF[,c("ID","interesting species","many indivdiduals at the same time")]
+PCA_incidental <- incidentalDF[,c("ID","rare species","many indivdiduals at the same time")]
 
 #### trap PCA ####
 
@@ -295,7 +298,7 @@ names(trapDF)[-1] <- c("all species","interesting species","common species",
 pca_rotated <- principal(trapDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+p4 <- plotPCA(pca_rotated)
 
 #identify variable loading most strongly on each axis
 #axis 1 = rare species
@@ -320,13 +323,12 @@ names(locationDF)[-1] <- c("protected areas","forest","wetland/water bodies","me
 pca_rotated <- principal(locationDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+p5 <- plotPCA(pca_rotated)
 
 #identify variable loading most strongly on each axis
 #axis 1 = protected areas
 #axis 2 = non-green urban
 PCA_location <- locationDF[,c("ID","protected areas","non-green urban")]
-
 
 #### experience PCA ####
 
@@ -348,12 +350,12 @@ nrow(experienceDF)
 pca_rotated <- principal(experienceDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+p6 <- plotPCA(pca_rotated)
 
 #identify variable loading most strongly on each axis
 #axis 1 = Member
 #axis 2 = Frq
-PCA_experience <- experienceDF[,c("ID","Member","Frq")]
+PCA_experience <- experienceDF[,c("ID","nuYears","Frq")]
 
 #### id uncertainty pca ####
 
@@ -374,7 +376,7 @@ nrow(idDF)
 pca_rotated <- principal(idDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+p7 <- plotPCA(pca_rotated)
 
 #identify variable loading most strongly on each axis
 #axis 1 = use an identification guide
@@ -398,46 +400,74 @@ nrow(surveytypeDF)
 pca_rotated <- principal(surveytypeDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+p8 <- plotPCA(pca_rotated)
 
 #identify variable loading most strongly on each axis
 #axis 1 = opportunistic
 #axis 2 = using traps
 PCA_survey <- surveytypeDF[,c("ID","opportunistic","using traps")]
 
+### combine PCA plots
+
+plot_grid(p1,p2,p3,p4,nrow=2)
+plot_grid(p5,p6,p7,p8,nrow=2)
+
 #### top two analysis ####
 
 #combine the top two from previous question groups
 #identify main axes of variation
 
-allpcaDF <- PCA_survey %>%
-  full_join(.,PCA_active,by="ID")%>%
-  full_join(.,PCA_incidental,by="ID")%>%
-  full_join(.,PCA_motivations,by="ID")%>%
-  full_join(.,PCA_location,by="ID")%>%
-  full_join(.,PCA_experience,by="ID")%>%
-  full_join(.,PCA_id,by="ID")%>%
+#first main axis
+allpcaDF <- PCA_survey[,1:2] %>%
+  full_join(.,PCA_active[,1:2],by="ID")%>%
+  full_join(.,PCA_incidental[,1:2],by="ID")%>%
+  full_join(.,PCA_motivations[,1:3],by="ID")%>%
+  full_join(.,PCA_location[,1:2],by="ID")%>%
+  full_join(.,PCA_experience[,1:3],by="ID")%>%
+  full_join(.,PCA_id[,1:2],by="ID")%>%
   janitor::clean_names(.)
-
 
 #check which columns have NAs
 apply(allpcaDF,2,function(x)sum(is.na(x)))
 allpcaDF <- na.omit(allpcaDF)
+nrow(allpcaDF)
 
 #pca analysis
-pca_rotated <- principal(allpcaDF[,-1], rotate="varimax", nfactors=2, scores=TRUE)
+pca_rotated <- principal(apply(allpcaDF,2,scale)[,-1], 
+                         rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 biplot(pca_rotated)
 loadings(pca_rotated)
 plotPCA(pca_rotated)
 
 #loadings on each of the dominant axes
-# axis 1 - membership vs opportunistic data
-# axis 2 = frq/protected areas  
+# axis 1 - protected areas
+# axis 2 = spend time outdoors  
 
-#### cluster analysis ####
+#Loadings:
+#  RC1    RC2   
+#opportunistic                       0.452
+#all_species                        -0.431
+#rare_species                 0.590  0.392
+#spend_time_outdoors                 0.590
+#support_conservation                     
+#protected_areas              0.646 -0.147
+#nu_years                     0.371 -0.512
+#frq                          0.583 -0.314
+#use_an_identification_guide  0.468  0.411
+
+#RC1   RC2
+#SS loadings    1.471 1.443
+#Proportion Var 0.163 0.160
+#Cumulative Var 0.163 0.324
+
+### cluster analysis ####
 
 mydata <- allpcaDF[,-1]
+
+#centre <- function(x) (x - median(x))
+centre <- function(x) (x - min(x))/(max(x)-min(x))
+#centre <- function(x) (x - median(x))/IQR(x)
 
 # K-Means Cluster Analysis
 
@@ -447,57 +477,111 @@ for (i in 2:10) wss[i] <- sum(kmeans(mydata,
 plot(1:10, wss, type="b", xlab="Number of Clusters",
      ylab="Within groups sum of squares")
 
-fit <- kmeans(mydata, 6) 
+fit <- kmeans(mydata, 4) 
 # get cluster means
 aggregate(mydata,by=list(fit$cluster),FUN=mean)
 # append cluster assignment
-mydata <- data.frame(mydata, fit$cluster) 
+mydata$groups <- fit$cluster
 
 # Ward Hierarchical Clustering
 
 d <- dist(mydata, method = "euclidean") # distance matrix
 fit <- hclust(d, method="ward")
 plot(fit) # display dendogram
-groups <- cutree(fit, k=5) # cut tree into 5 clusters
+groups <- cutree(fit, k=4) # cut tree into 5 clusters
 # draw dendogram with red borders around the 5 clusters
-rect.hclust(fit, k=5, border="red") 
-
-#get mean of each cluster - standardized
+rect.hclust(fit, k=4, border="red") 
 mydata$groups <- as.numeric(groups)
-centre <- function(x) (x - median(x))
 
-#plot means
-groupSummary <- mydata %>%
-  mutate(across(!"groups",centre)) %>%
-  group_by(groups) %>%
-  summarise(across(everything(),median)) %>%
-  pivot_longer(!groups,names_to = "behaviour", values_to = "mean")
-
-ggplot(groupSummary)+
-  geom_point(aes(x=behaviour,y=mean,color=factor(groups)),
-             size=2,alpha=0.5,
-             position = position_dodge(width = 0.3))+
-  coord_flip()+
-  geom_hline(yintercept=0)+
-  theme_few()
-
-#boxplots
+#boxplots:
 groupSummary <- mydata %>%
   mutate(across(!"groups",centre)) %>%
   pivot_longer(!groups,names_to = "behaviour", values_to = "mean")
+
+#order groups by number of years of experience
+library(lemon)
+groupMeans <- tapply(groupSummary$mean[groupSummary$behaviour=="nu_years"],
+                     groupSummary$groups[groupSummary$behaviour=="nu_years"],median)
+groupSummary$groups <- factor(groupSummary$groups,
+                              levels=names(groupMeans)[order(groupMeans)])
+
+groupSummary$behaviour <- factor(groupSummary$behaviour, 
+                                 levels=rev(c("nu_years","frq",
+                                              "spend_time_outdoors","support_conservation",
+                                              "opportunistic","all_species","rare_species",
+                                              "protected_areas","use_an_identification_guide")))
 
 ggplot(groupSummary)+
   geom_boxplot(aes(x=behaviour,y=mean))+
   coord_flip()+
   geom_hline(yintercept=0)+
   theme_few()+
-  facet_wrap(~groups,ncol=5)
+  facet_wrap(~groups,nrow=1)+
+  ylab("scaled mean")
+
+#star plots
+
+groupSummary <- mydata %>%
+  mutate(across(!"groups",centre)) %>%
+  pivot_longer(!groups,names_to = "behaviour", values_to = "values") %>%
+  group_by(groups, behaviour) %>%
+  summarise(med = mean(values))
 
 ggplot(groupSummary)+
-  geom_boxplot(aes(x=factor(groups),y=mean))+
-  coord_flip()+
-  geom_hline(yintercept=0)+
-  theme_few()+
-  facet_wrap(~behaviour,ncol=5)
+  geom_col(aes(x=behaviour,y=med))+
+  coord_polar()+
+  facet_wrap(~groups)+
+  theme_minimal()
+
+#radar plots
+
+groupSummary <- mydata %>%
+  mutate(across(!"groups",centre)) %>%
+  group_by(groups) %>%
+  summarise(across(everything(),mean))
+  
+
+library(fmsb)
+# To use the fmsb package, I have to add 2 lines to the dataframe: the max and min of each topic to show on the plot!
+data <-rbind(rep(1,(ncol(groupSummary)-1)), 
+             rep(0,(nrow(groupSummary)-1)), 
+             arrange(groupSummary,desc(frq))[,-1])
+
+# Prepare color
+colors_border=c( rgb(0.8,0.2,0.5,0.9),
+                rgb(0.2,0.5,0.5,0.9), 
+                 rgb(0.2,0.2,0.5,0.9), 
+                 rgb(0.2,0.8,0.5,0.9))
+
+colors_in=c( rgb(0.8,0.2,0.5,0.2),
+                 rgb(0.2,0.5,0.5,0.2), 
+                 rgb(0.2,0.2,0.5,0.2), 
+                 rgb(0.2,0.8,0.5,0.2))
+
+#set margins
+par(xpd = TRUE)
+
+#radar chart for multiple
+radarchart(data, axistype=2, 
+            
+            #custom polygon
+            pcol=colors_border , pfcol=colors_in, plwd=2, plty=1 , 
+
+            #custom the grid
+            cglcol="grey", cglty=1, axislabcol="grey", cglwd=1,
+            
+            #custom labels
+            vlcex=0.6 
+)
+
+# Legend
+
+legend(x=-1.5, y=-1.2, legend = c("High", "Mid-High","Mid-Low","Low"),
+       bty = "n", pch=20 , col=colors_border , text.col = "black", 
+       cex=0.8, pt.cex=1,
+       ncol=4)
+
+#radar chart for each one???
+
 
 #### end ####
