@@ -463,11 +463,11 @@ plotPCA(pca_rotated)
 
 ### cluster analysis ####
 
-mydata <- allpcaDF[,-1]
-
 #centre <- function(x) (x - median(x))
 centre <- function(x) (x - min(x))/(max(x)-min(x))
 #centre <- function(x) (x - median(x))/IQR(x)
+
+mydata <- data.frame(apply(allpcaDF,2,centre))[,-1]
 
 # K-Means Cluster Analysis
 
@@ -528,17 +528,18 @@ groupSummary <- mydata %>%
   summarise(med = mean(values))
 
 ggplot(groupSummary)+
-  geom_col(aes(x=behaviour,y=med))+
+  geom_col(aes(x=behaviour,y=med, fill=behaviour))+
   coord_polar()+
   facet_wrap(~groups)+
-  theme_minimal()
+  theme_minimal()+
+  theme(legend.position = "none")
 
 #radar plots
 
 groupSummary <- mydata %>%
   mutate(across(!"groups",centre)) %>%
   group_by(groups) %>%
-  summarise(across(everything(),mean))
+  summarise(across(everything(),median))
   
 
 library(fmsb)
@@ -576,12 +577,11 @@ radarchart(data, axistype=2,
 
 # Legend
 
-legend(x=-1.5, y=-1.2, legend = c("High", "Mid-High","Mid-Low","Low"),
-       bty = "n", pch=20 , col=colors_border , text.col = "black", 
-       cex=0.8, pt.cex=1,
-       ncol=4)
+# legend(x=-1.5, y=-1.2, legend = c("High", "Mid-High","Mid-Low","Low"),
+#        bty = "n", pch=20 , col=colors_border , text.col = "black", 
+#        cex=0.8, pt.cex=1,
+#        ncol=4)
 
 #radar chart for each one???
-
 
 #### end ####
