@@ -2,7 +2,7 @@
 
 #library(devtools)
 #install_github("vqv/ggbiplot")
-library(ggbiplot)
+#library(ggbiplot)
 library(dplyr)
 library(tidyverse)
 library(stringr)
@@ -344,6 +344,8 @@ experienceDF <- format4PCA(experienceDF)
 names(experienceDF)[-1] <- c("nuYears","Frq","StandMonitor","Knowledge","Member")
 
 experienceDF <- na.omit(experienceDF)
+experienceDF$nuYears <- log2(experienceDF$nuYears+1)
+
 nrow(experienceDF)
 
 #rotated PCA
@@ -355,7 +357,7 @@ p6 <- plotPCA(pca_rotated)
 #identify variable loading most strongly on each axis
 #axis 1 = Member
 #axis 2 = Frq
-PCA_experience <- experienceDF[,c("ID","nuYears","Frq")]
+PCA_experience <- experienceDF[,c("ID","Member","Frq")]
 
 #### id uncertainty pca ####
 
@@ -405,10 +407,11 @@ p8 <- plotPCA(pca_rotated)
 #identify variable loading most strongly on each axis
 #axis 1 = opportunistic
 #axis 2 = using traps
-PCA_survey <- surveytypeDF[,c("ID","opportunistic","using traps")]
+PCA_survey <- surveytypeDF[,c("ID","active search","using traps")]
 
 ### combine PCA plots
 
+library(cowplot)
 plot_grid(p1,p2,p3,p4,nrow=2)
 plot_grid(p5,p6,p7,p8,nrow=2)
 
@@ -432,34 +435,38 @@ apply(allpcaDF,2,function(x)sum(is.na(x)))
 allpcaDF <- na.omit(allpcaDF)
 nrow(allpcaDF)
 
+#tidy names
+names(allpcaDF) <- c("id","active_searches","all_species(active)",
+                     "rare_species(opportunistic)","spend_time_outdoors",
+                     "support_conservation","protected_areas","member",
+                     "frq_activity","use_ID_guide")
+
 #pca analysis
 pca_rotated <- principal(apply(allpcaDF,2,scale)[,-1], 
                          rotate="varimax", nfactors=2, scores=TRUE)
 summary(pca_rotated)
 biplot(pca_rotated)
 loadings(pca_rotated)
-plotPCA(pca_rotated)
+main_pca <- plotPCA(pca_rotated)+
+  theme_classic()
+main_pca
 
-#loadings on each of the dominant axes
-# axis 1 - protected areas
-# axis 2 = spend time outdoors  
-
-#Loadings:
-#  RC1    RC2   
-#opportunistic                       0.452
-#all_species                        -0.431
-#rare_species                 0.590  0.392
-#spend_time_outdoors                 0.590
-#support_conservation                     
-#protected_areas              0.646 -0.147
-#nu_years                     0.371 -0.512
-#frq                          0.583 -0.314
-#use_an_identification_guide  0.468  0.411
-
-#RC1   RC2
-#SS loadings    1.471 1.443
-#Proportion Var 0.163 0.160
-#Cumulative Var 0.163 0.324
+# Loadings:
+#   RC1    RC2   
+# active_search                0.631 -0.124
+# all_species                  0.434 -0.243
+# rare_species                        0.710
+# spend_time_outdoors         -0.347  0.371
+# support_conservation         0.125       
+# protected_areas              0.444  0.445
+# member                       0.547       
+# frq                          0.621  0.255
+# use_an_identification_guide         0.648
+# 
+# RC1   RC2
+# SS loadings    1.611 1.404
+# Proportion Var 0.179 0.156
+# Cumulative Var 0.179 0.335
 
 ### cluster analysis ####
 
@@ -486,7 +493,7 @@ mydata$groups <- fit$cluster
 # Ward Hierarchical Clustering
 
 d <- dist(mydata, method = "euclidean") # distance matrix
-fit <- hclust(d, method="ward")
+fit <- hclust(d, method="ward.D2")
 plot(fit) # display dendogram
 groups <- cutree(fit, k=4) # cut tree into 5 clusters
 # draw dendogram with red borders around the 5 clusters
@@ -497,19 +504,6 @@ mydata$groups <- as.numeric(groups)
 groupSummary <- mydata %>%
   mutate(across(!"groups",centre)) %>%
   pivot_longer(!groups,names_to = "behaviour", values_to = "mean")
-
-#order groups by number of years of experience
-library(lemon)
-groupMeans <- tapply(groupSummary$mean[groupSummary$behaviour=="nu_years"],
-                     groupSummary$groups[groupSummary$behaviour=="nu_years"],median)
-groupSummary$groups <- factor(groupSummary$groups,
-                              levels=names(groupMeans)[order(groupMeans)])
-
-groupSummary$behaviour <- factor(groupSummary$behaviour, 
-                                 levels=rev(c("nu_years","frq",
-                                              "spend_time_outdoors","support_conservation",
-                                              "opportunistic","all_species","rare_species",
-                                              "protected_areas","use_an_identification_guide")))
 
 ggplot(groupSummary)+
   geom_boxplot(aes(x=behaviour,y=mean))+
@@ -539,14 +533,12 @@ ggplot(groupSummary)+
 groupSummary <- mydata %>%
   mutate(across(!"groups",centre)) %>%
   group_by(groups) %>%
-  summarise(across(everything(),median))
+  summarise(across(everything(),mean))
   
-
-library(fmsb)
 # To use the fmsb package, I have to add 2 lines to the dataframe: the max and min of each topic to show on the plot!
 data <-rbind(rep(1,(ncol(groupSummary)-1)), 
              rep(0,(nrow(groupSummary)-1)), 
-             arrange(groupSummary,desc(frq))[,-1])
+             arrange(groupSummary,desc(frequency_activity))[,-1])
 
 # Prepare color
 colors_border=c( rgb(0.8,0.2,0.5,0.9),
@@ -554,16 +546,16 @@ colors_border=c( rgb(0.8,0.2,0.5,0.9),
                  rgb(0.2,0.2,0.5,0.9), 
                  rgb(0.2,0.8,0.5,0.9))
 
-colors_in=c( rgb(0.8,0.2,0.5,0.2),
-                 rgb(0.2,0.5,0.5,0.2), 
-                 rgb(0.2,0.2,0.5,0.2), 
-                 rgb(0.2,0.8,0.5,0.2))
+colors_in=c( rgb(0.8,0.2,0.5,0.15),
+                 rgb(0.2,0.5,0.5,0.15), 
+                 rgb(0.2,0.2,0.5,0.15), 
+                 rgb(0.2,0.8,0.5,0.15))
 
 #set margins
 par(xpd = TRUE)
 
 #radar chart for multiple
-radarchart(data, axistype=2, 
+fmsb::radarchart(data, axistype=2, 
             
             #custom polygon
             pcol=colors_border , pfcol=colors_in, plwd=2, plty=1 , 
@@ -582,6 +574,38 @@ radarchart(data, axistype=2,
 #        cex=0.8, pt.cex=1,
 #        ncol=4)
 
-#radar chart for each one???
+
+#cant be saved as an object
+
+#try ggradar
+library(ggradar)
+
+radar_data <- cbind(Group=1:4,data[-c(1:2),])
+radar_data<- radar_data[,c("Group","member","frequency_activity",
+                           "support_conservation","spend_time_outdoors",
+                           "use_ID_guide","protected_areas",
+                           "active_searches","all_species.active.",
+                           "rare_species.opportunistic.")]
+
+radar1 <- ggradar(
+  radar_data, 
+  values.radar = c("0", "0.5", "1"),
+  grid.min = 0, grid.mid = 0.5, grid.max = 1,
+  group.colours = colors_border,
+  axis.labels  = c("membership","frequency\n activity","support \nconservation",
+                   "spend time\noutdoors","use ID guide", "visit\nprotected areas",
+                   "conduct\nactive searches", "all species\n(active survey)",
+                    "rare species\n(opportunistic survey)"),
+  group.line.width = 1,
+  group.point.size = 1.5,
+  legend.position = "none",
+  axis.label.size = 2.5,
+  grid.label.size = 2,
+)
+
+radar1
+
+plot_grid(main_pca,radar1,ncol=2,
+          scale=c(0.9,1.1))
 
 #### end ####
