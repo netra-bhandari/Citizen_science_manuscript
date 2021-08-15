@@ -249,5 +249,13 @@ table(allDF$Taxa)
 saveRDS(allDF,file="cleaned-data/clean_data.RDS")
 
 
+### cleaning outliers ####
+
+str(allDF)
+
+#nuYears
+summary(allDF$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_)
+allDF$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_[allDF$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_>69] <- 69
 
 
+saveRDS(allDF,file="cleaned-data/clean_data.RDS")
