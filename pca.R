@@ -14,6 +14,8 @@ library("factoextra")
 library(ggpubr)
 library(ggthemes)
 library(psych)
+library(cowplot)
+library(wesanderson)
 
 source('helper_functions.R', encoding = 'UTF-8')
 
@@ -438,7 +440,7 @@ nrow(allpcaDF)
 #tidy names
 names(allpcaDF) <- c("id","active_searches","all_species(active)",
                      "rare_species(opportunistic)","spend_time_outdoors",
-                     "support_conservation","protected_areas","member",
+                     "support_conservation","visit_protected_areas","membership",
                      "frq_activity","use_ID_guide")
 
 #pca analysis
@@ -538,7 +540,7 @@ groupSummary <- mydata %>%
 # To use the fmsb package, I have to add 2 lines to the dataframe: the max and min of each topic to show on the plot!
 data <-rbind(rep(1,(ncol(groupSummary)-1)), 
              rep(0,(nrow(groupSummary)-1)), 
-             arrange(groupSummary,desc(frequency_activity))[,-1])
+             groupSummary[,-1])
 
 # Prepare color
 colors_border=c( rgb(0.8,0.2,0.5,0.9),
@@ -578,12 +580,18 @@ fmsb::radarchart(data, axistype=2,
 #cant be saved as an object
 
 #try ggradar
+
 library(ggradar)
 
-radar_data <- cbind(Group=1:4,data[-c(1:2),])
-radar_data<- radar_data[,c("Group","member","frequency_activity",
+groupSummary <- mydata %>%
+  mutate(across(!"groups",centre)) %>%
+  group_by(groups) %>%
+  summarise(across(everything(),mean))
+
+radar_data <- cbind(Group=1:nrow(groupSummary),groupSummary[,-1])
+radar_data<- radar_data[,c("Group","membership","frq_activity",
                            "support_conservation","spend_time_outdoors",
-                           "use_ID_guide","protected_areas",
+                           "use_ID_guide","visit_protected_areas",
                            "active_searches","all_species.active.",
                            "rare_species.opportunistic.")]
 
@@ -591,21 +599,25 @@ radar1 <- ggradar(
   radar_data, 
   values.radar = c("0", "0.5", "1"),
   grid.min = 0, grid.mid = 0.5, grid.max = 1,
-  group.colours = colors_border,
+  background.circle.colour = "white",
+  gridline.mid.colour = "grey",
+  group.colours = wes_palette("Darjeeling1", 
+                              type="continuous", n=nrow(groupSummary)),
   axis.labels  = c("membership","frequency\n activity","support \nconservation",
                    "spend time\noutdoors","use ID guide", "visit\nprotected areas",
-                   "conduct\nactive searches", "all species\n(active survey)",
-                    "rare species\n(opportunistic survey)"),
-  group.line.width = 1,
-  group.point.size = 1.5,
+                   "conduct\nactive searches", "all species\n(active)",
+                    "rare species\n(opportunistic)"),
+  group.line.width = 1.5,
+  group.point.size = 2.5,
   legend.position = "none",
   axis.label.size = 2.5,
-  grid.label.size = 2,
+  grid.label.size = 2.5,
 )
 
 radar1
 
-plot_grid(main_pca,radar1,ncol=2,
-          scale=c(0.9,1.1))
+plot_grid(main_pca,radar1,ncol=1,
+          scale=c(0.7,1.1),
+          labels=c("a)","b)"))
 
 #### end ####

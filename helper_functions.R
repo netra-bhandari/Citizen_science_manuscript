@@ -69,9 +69,10 @@ plotPCA <- function(pca_rotated){
 
   ggplot()+
     geom_segment(data=loadings, aes(x=0, y=0, xend=RC1, yend=RC2), 
-                 arrow=arrow(length=unit(0.2,"cm")),colour="grey")+
+                 arrow=arrow(length=unit(0.2,"cm")),
+                 colour="gray80")+
     geom_text_repel(data=loadings, aes(x=RC1, y=RC2, label=Names), 
-                    alpha=0.6, size=3)+
+                    size=2.5,colour="black")+
     scale_x_continuous("Principal Component 1")+
     scale_y_continuous("Principal Component 2")+
     theme_few()
