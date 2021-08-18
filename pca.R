@@ -227,6 +227,10 @@ p1#identify variable loading strongly on each axis - of most interest given the 
 #axis 2 = support conservation
 PCA_motivations <- motivationsDF[,c("ID","spend time outdoors","support conservation")]
 
+scores_motivations <- data.frame(ID = PCA_motivations$ID,
+                                 scores = pca_rotated$scores[,1],
+                                 scores2 = pca_rotated$scores[,2])
+
 #save scores and person ID
 #motivationsDF$scores1 <- pca_rotated$scores[,1]
 #motivationsDF$scores2 <- pca_rotated$scores[,2]
@@ -256,6 +260,9 @@ p2 <- plotPCA(pca_rotated)
 #axis 2 = common species
 PCA_active <- activeDF[,c("ID","all species","common species")]
 
+scores_active <- data.frame(ID = PCA_active$ID,
+                            scores = pca_rotated$scores[,1],
+                            scores2 = pca_rotated$scores[,2])
 
 #### incidental PCA ####
 
@@ -281,6 +288,10 @@ p3 <- plotPCA(pca_rotated)
 #axis 1 = interesting species
 #axis 2 = many indivdiduals at the same time
 PCA_incidental <- incidentalDF[,c("ID","rare species","many indivdiduals at the same time")]
+
+scores_incidental <- data.frame(ID = PCA_incidental$ID,
+                                scores = pca_rotated$scores[,1],
+                                scores2 = pca_rotated$scores[,2])
 
 #### trap PCA ####
 
@@ -332,6 +343,10 @@ p5 <- plotPCA(pca_rotated)
 #axis 2 = non-green urban
 PCA_location <- locationDF[,c("ID","protected areas","non-green urban")]
 
+scores_location <- data.frame(ID = PCA_location$ID,
+                              scores = pca_rotated$scores[,1],
+                              scores2 = pca_rotated$scores[,2])
+
 #### experience PCA ####
 
 experienceDF <- sample_data[,c("ID","Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_","Wie_oft_haben_Sie_im_Fruhling_oder_Sommer_2020_Artdaten_gesammelt_",
@@ -361,6 +376,10 @@ p6 <- plotPCA(pca_rotated)
 #axis 2 = Frq
 PCA_experience <- experienceDF[,c("ID","Member","Frq")]
 
+scores_experience <- data.frame(ID = PCA_experience$ID,
+                                scores = pca_rotated$scores[,1],
+                                scores2 = pca_rotated$scores[,2])
+
 #### id uncertainty pca ####
 
 idDF <- sample_data[,c(1,grep("wenn_Sie_sich_bei_der_Bestimmung",names(sample_data)))]
@@ -387,6 +406,10 @@ p7 <- plotPCA(pca_rotated)
 #axis 2 = not report
 PCA_id <- idDF[,c("ID","use an identification guide","not report")]
 
+scores_id <- data.frame(ID = PCA_id$ID,
+                        scores = pca_rotated$scores[,1],
+                        scores2 = pca_rotated$scores[,2])
+
 #### survey type ####
 
 surveytypeDF <- sample_data[,c(1,grep("Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben",names(sample_data)))]
@@ -411,13 +434,17 @@ p8 <- plotPCA(pca_rotated)
 #axis 2 = using traps
 PCA_survey <- surveytypeDF[,c("ID","active search","using traps")]
 
+scores_survey <- data.frame(ID = PCA_survey$ID,
+                            scores = pca_rotated$scores[,1],
+                            scores2 = pca_rotated$scores[,2])
+
 ### combine PCA plots
 
 library(cowplot)
 plot_grid(p1,p2,p3,p4,nrow=2)
 plot_grid(p5,p6,p7,p8,nrow=2)
 
-#### top two analysis ####
+### top two analysis ####
 
 #combine the top two from previous question groups
 #identify main axes of variation
@@ -619,5 +646,6 @@ radar1
 plot_grid(main_pca,radar1,ncol=1,
           scale=c(0.7,1.1),
           labels=c("a)","b)"))
+
 
 #### end ####
