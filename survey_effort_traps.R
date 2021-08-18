@@ -121,3 +121,5 @@ summary(sample_data$Age)
 table(sample_data$Sind_Sie_Mitglied_in_einer_Fachgesellschaft_fur_eine_bestimmte_Artengruppe_z_B_GdO_GAC_DDA_etc_)
 
 summary(sample_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_)
+
+table(sample_data$Taxa)
