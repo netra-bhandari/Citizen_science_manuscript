@@ -90,3 +90,34 @@ table(sample_data$Specialism,sample_data$Taxa)
 #which people are specialised
 unique(sample_data$Specialism_group[sample_data$Taxa=="Vögel"])
 
+
+### corona ####
+
+table(sample_data$War_Ihre_Artenbeobachtung_oder_berichterstattung_im_Fruhling_Sommer_2020_aufgrund_der_Corona_Situation_anders_als_in_den_Vorjahren_)/nrow(sample_data)
+
+# Ja, ich war aktiver als in den anderen Jahren. 
+# 0.13125695 
+# Ja, ich war weniger aktiv als in den anderen Jahren. 
+# 0.14238042 
+# Nein, es war mein erstes Jahr. 
+# 0.08342603 
+# Nein, ich bin weitgehend genauso vorgegangen wie in den anderen Jahren. 
+# 0.64293660
+
+#### demographics
+
+table(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_)
+sample_data$Age <- ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="19 oder jünger",15,
+                          ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="20-29",25,
+                          ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="30-39",35,
+                          ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="40-49",45,
+                          ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="50-59",55,
+                          ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="60-69",65,
+                          ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="70-79",75,
+                          ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="80+",85,NA))))))))
+
+summary(sample_data$Age)
+
+table(sample_data$Sind_Sie_Mitglied_in_einer_Fachgesellschaft_fur_eine_bestimmte_Artengruppe_z_B_GdO_GAC_DDA_etc_)
+
+summary(sample_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_)
