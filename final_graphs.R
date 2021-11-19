@@ -17,8 +17,8 @@ sample_data <- readRDS("cleaned-data/clean_data.RDS")
 imp_obs <- data.frame(sample_data[ , grepl("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte_",  names(sample_data))])
 
 imp_obs <-  imp_obs %>% 
-  mutate_all(funs(case_when(. == "überhaupt nicht wichtig" ~ "not important at all",
-                            . == "wenig wichtig" ~ "not very important",
+  mutate_all(funs(case_when(. == "überhaupt nicht wichtig" ~ "not at all important",
+                            . == "wenig wichtig" ~ "slightly important",
                             . == "mäßig wichtig" ~ "moderately important",
                             . == "wichtig" ~ "important",
                             . == "sehr wichtig" ~ "very important")) )
