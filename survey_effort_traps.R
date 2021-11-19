@@ -49,7 +49,7 @@ sample_data %>%
   dplyr::group_by(Taxa) %>%
   dplyr::summarise(medMinutes = median(activeMins,na.rm=T))
 
-#### trap survey length ####
+### trap survey length ####
 
 summary(sample_data$trapDays)
 summary(sample_data$trapHrs)
@@ -67,7 +67,7 @@ sample_data %>%
   dplyr::group_by(Taxa) %>%
   dplyr::summarise(medMinutes = median(trapDays,na.rm=T))
 
-#### trap types ####
+### trap types ####
 
 sample_data$trapTypes <- sample_data$Welche_Typen_von_Fallen_verwenden_Sie_Bitte_trennen_Sie_diese_jeweils_mit_einem_Komma_
 
@@ -77,7 +77,7 @@ unique(sample_data$trapTypes[sample_data$Taxa=="Käfer"])
 unique(sample_data$trapTypes[sample_data$Taxa=="Sonstiges"])
 
 
-#### taxa specialism ####
+### taxa specialism ####
 
 sample_data$Specialism <- sample_data$Erfassen_Sie_vorrangig_Beobachtungsdaten_uber_eine_bestimmte_Untergruppe_z_B_eine_Familie_innerhalb_dieser_Artengruppe_
 
@@ -89,7 +89,9 @@ table(sample_data$Specialism,sample_data$Taxa)
 
 #which people are specialised
 unique(sample_data$Specialism_group[sample_data$Taxa=="Vögel"])
+unique(sample_data$Specialism_group[sample_data$Taxa=="Vögel"])
 
+sample_data$Falls_Ja_Bitte_spezifizieren_Sie_die_Untergruppe_uber_die_Sie_vorrangig_Beobachtungsdaten_erfassen_[sample_data$Taxa=="Käfer"]
 
 ### corona ####
 
@@ -104,7 +106,7 @@ table(sample_data$War_Ihre_Artenbeobachtung_oder_berichterstattung_im_Fruhling_S
 # Nein, ich bin weitgehend genauso vorgegangen wie in den anderen Jahren. 
 # 0.64293660
 
-#### demographics
+### demographics####
 
 table(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_)
 sample_data$Age <- ifelse(sample_data$Zu_welcher_Altersklasse_gehoren_Sie_=="19 oder jünger",15,
@@ -123,3 +125,18 @@ table(sample_data$Sind_Sie_Mitglied_in_einer_Fachgesellschaft_fur_eine_bestimmte
 summary(sample_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_)
 
 table(sample_data$Taxa)
+table(sample_data$Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_das_Resultat_einer_aktiven_Suche_Sie_sind_zum_Beispiel_an_einen_bestimmten_Ort_gefahren_um_gezielt_nach_Arten_zu_suchen_)/nrow(sample_data)
+table(sample_data$Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_oder_zufallige_Beobachtungen_ohne_aktive_Suche_)/nrow(sample_data)
+
+table(sample_data$Wie_viele_der_Beobachtungen_die_Sie_im_Fruhling_und_Sommer_2020_gemeldet_haben_waren_oder_aus_aufgestellten_Fallen_)/nrow(sample_data)
+
+### locations #####
+
+table(sample_data$Wenn_Sie_an_den_Fruhling_oder_Sommer_2020_denken_wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten_gesucht_Feuchtgebiete_und_Gewasser_)/nrow(sample_data)
+
+
+table(sample_data$Wenn_Sie_an_den_Fruhling_oder_Sommer_2020_denken_wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten_gesucht_Wiesen_)/nrow(sample_data)
+
+table(sample_data$Wenn_Sie_an_den_Fruhling_oder_Sommer_2020_denken_wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten_gesucht_Ackerland_)/nrow(sample_data)
+
+table(sample_data$Wenn_Sie_an_den_Fruhling_oder_Sommer_2020_denken_wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten_gesucht_Stadtische_Gebiete_bebaute_Flachen_z_B_Hauser_Gehsteige_Strasse_)/nrow(sample_data)
