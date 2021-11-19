@@ -1,0 +1,1937 @@
+---
+title: "Survey data_analaysis"
+author: "Netra_Bhandari"
+date: "2/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message:=FALSE, warning=FALSE, include=FALSE}
+setwd("D:/github/Citizen_science_manuscript")
+#path to save figures
+path <- "D:/github/Citizen_science_manuscript"
+
+#load the following libraries
+
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(sjPlot)
+library(ggridges)
+library(ggplot2)
+library(sjmisc)
+library(likert)
+library(viridis)
+library(scales)
+#install.packages("wordcloud")
+library(wordcloud)
+#install.packages("RColorBrewer")
+library(RColorBrewer)
+#install.packages("wordcloud2")
+library(wordcloud2)
+#install.packages("tm")
+library(tm)
+library(cowplot)
+library(patchwork)
+library(tidyverse)
+library(ggtextures)
+library(magick)
+library(png)
+library(devtools)
+#install_github("timelyportfolio/d3treeR")
+library(treemap)
+library(d3treeR)
+library(ggalluvial)
+library(ggfittext)
+#devtools::install_github("davidsjoberg/ggsankey")
+library(ggsankey)
+library(extrafont)
+library(ggtext)
+
+```
+
+
+```{r}
+# create a function to wrap the long questions for a tidy representation
+
+swr = function(string, nwrap=20) {
+  paste(strwrap(string, width=nwrap), collapse="\n")
+}
+
+swr = Vectorize(swr)
+
+```
+
+
+
+```{r cars, include=FALSE}
+#read in the dataset
+#make sure to use the correct encoding 
+#to take german characters into account
+survey_data <- read.csv("data/results-survey796935.csv",encoding = "UTF-8")
+
+head(survey_data)
+colnames(survey_data) <- gsub("Vogel","Vögel", colnames(survey_data))
+
+#n = 1645
+#people who completed the survey
+completed <-  survey_data %>% filter(Letzte_Seite == 12 | Letzte_Seite == 13) #900
+
+#stats on people who attempted the survey 
+tally_people <- data.frame(Letzte_Seite = survey_data$Letzte_Seite) 
+
+tally_people$Letzte_Seite <- as.factor(tally_people$Letzte_Seite)
+tally_people <- tally_people %>% group_by(Letzte_Seite) %>% tally() 
+tally_people <- tally_people %>%  mutate(prop = n/1645*100)
+(tally_plot <- ggplot(tally_people, aes(x= Letzte_Seite, y = prop)) + 
+              geom_bar(stat = "identity", fill ="#78B7C5",colour = "black")+
+              xlab("Last Page")+
+              ylab("Percentage(%)")+ 
+              theme_classic()+
+              coord_flip()+
+              ylim(0,75)+
+              theme(axis.text = element_text(size = 15,color = "black"),                          
+                          axis.title.x = element_text(size = 15, face = "plain"),
+                          axis.title.y = element_text(size = 15), 
+                          panel.grid = element_blank(),
+                          panel.border = element_rect(color = "black", fill = NA))) 
+
+ggsave(tally_plot, filename = "plots/tally_plot.png")
+
+
+#use completed variable as the new survey_data
+survey_data <- completed
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+#Question 1 -Wir interessieren uns für Ihre Erfahrungen bei der Beobachtung von Biodiversität.
+#A) Wie viele Jahre sind Sie schon in der Erfassung der Artenbeobachtungsdaten aktiv?
+
+#histogram =====================================================================
+experience <- data.frame(survey_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv._)
+
+colnames(experience) <- "years_of_experience"
+
+experience <- drop_na(experience)
+
+median(experience$years_of_experience) #11
+IQR(experience$years_of_experience) #26
+
+(experience_plot <- ggplot(experience, aes(x = years_of_experience)) +                
+                          geom_histogram(binwidth = 3, colour = "black", fill = "#CD8500") +    
+                          geom_vline(aes(xintercept = median(years_of_experience)),                       
+                          colour = "red", linetype = "dashed", size=1) +          
+                          theme_bw() +                                                      
+                          ylab("Count\n") +                                                   
+                          xlab("Years of experience")  +                            
+                          theme(axis.text = element_text(size = 40,color = "black"),                          
+                          axis.title.x = element_text(size = 40, face = "plain"),
+                          axis.title.y = element_text(size = 40), 
+                          panel.grid = element_blank(),
+                          panel.border = element_rect(color = "black", fill = NA)))                              
+```
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#the name of the variables are based on the english translations of the question
+#in order to ease the understanding 
+
+#Q. Wie oft haben Sie im Frühling oder Sommer 2020 Artdaten gesammelt.  
+
+regularity <- data.frame(table(survey_data$Wie_oft_haben_Sie_im_Frühling_oder_Sommer_2020_Artdaten_gesammelt._))
+
+regularity <- regularity %>% filter(!Var1 == "")
+
+regularity$Var1 <-  str_replace_all(regularity$Var1, 
+                                    c("all zwei Woche/ fast all zwei Woche"="Every other week/\nalmost every other week",
+                                      "alle zwei Monate / fast alle zwei Monate" ="Every other month/\nalmost every other month",
+                                      "Monatlich / fast monatlich" = "Monthly/almost monthly",
+                                      "Seltener"= "Rarely",
+                                      "Täglich / fast täglich" = "Daily/almost daily",
+                                      "Wöchentlich / fast wöchentlich" = "Weekly/almost weekly"))
+                                 
+colnames(regularity) <- c("Regularity","Frequency")
+
+regularity$Regularity <- factor(regularity$Regularity,
+                                levels = c("Daily/almost daily", "Weekly/almost weekly", 
+                                        "Every other week/\nalmost every other week",
+                                        "Monthly/almost monthly", 
+                                        "Every other month/\nalmost every other month", "Rarely"))
+
+
+# Compute percentages
+regularity$fraction = regularity$Frequency/ sum(regularity$Frequency)
+
+# Compute the cumulative percentages (top of each rectangle)
+regularity$ymax = cumsum(regularity$fraction)
+
+# Compute the bottom of each rectangle
+regularity$ymin = c(0, head(regularity$ymax, n=-1))
+
+regularity$labelPosition <- (regularity$ymax + regularity$ymin) / 2
+ 
+regularity$label <- (regularity$Frequency)
+
+
+# Make the plot===========================================================================
+(regularity_plot <- ggplot(regularity, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3,fill= Regularity)) +
+                    geom_rect() +
+                    coord_polar(theta="y") + 
+                    xlim(c(2, 4))+
+                    scale_fill_brewer(palette=4, direction =-1)+
+                    geom_label( x= 3.5, aes(y=labelPosition, label=label),size= 20, show_guide  = F)+
+                    labs(fill = "Frequency of \ndata collection")+
+                    theme_void()+
+                    theme(legend.position="right", 
+                          legend.title = element_text(size = 30),
+                          legend.text = element_text(size = 30),
+                          legend.box="vertical",
+                          legend.text.align = 0,
+                          panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+```
+
+
+
+```{r echo=FALSE, fig.width=10, message=FALSE, warning=FALSE}
+
+#Question 2 - Wie Wichtig waren Ihnen die folgenden Aspekte, als Sie die Beobachtungen getätigt haben
+# do a string search
+
+
+
+imp_obs <- data.frame(survey_data[ , grepl("Wie_wichtig_waren_Ihnen_die_folgenden_Aspekte._als_Sie_Beobachtungsdaten_erfasst_haben" ,  
+                                           names( survey_data )) ])
+
+colnames(imp_obs) <- gsub("_", " ", colnames(imp_obs))
+
+
+#assign the title
+#title <- c("How important were the following aspects to you when you collected observation data? ")
+
+colnames(imp_obs) = c("Improve knowledge of species", "Contribute to scientific knowledge", 
+                      "Support conservation", "Spend time outdoors", "Physical activity ", 
+                      "Protect/maintain/improve a specific place", "Gain local knowledge about where I live", 
+                      "Meet other people", "Have fun exploring/finding")
+
+imp_obs <-  imp_obs %>% 
+            mutate_all(funs(case_when(. == "überhaupt nicht wichtig" ~ "not important at all",
+                                      . == "wenig wichtig" ~ "not very important",
+                                      . == "mäßig wichtig" ~ "moderately important",
+                                      . == "wichtig" ~ "important",
+                                      . == "sehr wichtig" ~ "very important")) )
+
+# remove empty rows
+imp_obs <- imp_obs %>% filter(!`Improve knowledge of species` == "")
+imp_obs <- imp_obs %>% filter(!`Contribute to scientific knowledge` == "")
+imp_obs <- imp_obs %>% filter(!`Spend time outdoors` == "")
+imp_obs <- imp_obs %>% filter(!`Physical activity ` == "")
+imp_obs <- imp_obs %>% filter(!`Protect/maintain/improve a specific place` == "")
+imp_obs <- imp_obs %>% filter(!`Meet other people` == "")
+imp_obs <- imp_obs %>% filter(!`Gain local knowledge about where I live` == "")
+imp_obs <- imp_obs %>% filter(!`Have fun exploring/finding` == "")
+
+#convert the variables to factors============================================================
+imp_obs <- as.data.frame(lapply(imp_obs, factor, levels = c("not important at all","not very important",
+                                                            "moderately important","important","very important")))
+
+colnames(imp_obs) = c("Improve knowledge of species", "Contribute to scientific knowledge", 
+                      "Support conservation", "Spend time outdoors", "Physical activity ",
+                      "Protect/maintain/improve a specific place", "Gain local knowledge about where I live",
+                      "Meet other people", "Have fun exploring/finding")
+
+(lik_imp_obs <- plot(likert(imp_obs), center=2, plot.percents=F, plot.percent.low=T,
+                    plot.percent.high=T,legend.position = "right",text.size=14, ordered=TRUE,
+                    colors = c("#a6611a","#dfc27d","#f5f5f5","#80cdc1","#018571"))+
+              theme(strip.text=element_text(size=50),
+                    axis.text.y = element_text(size = 50, color = "black"),
+                    axis.text.x = element_text(size = 50, color = "black"), 
+                    axis.title.x = element_text(size = 50, color = "black"),   
+                    axis.title.y = element_text(size = 50, color = "black"),
+                    legend.title=element_text(size=50, color = "black"), 
+                    legend.text=element_text(size=50, color = "black"))+
+              ylab("Percentage of respondents (%)"))
+
+
+
+
+
+```
+
+
+```{r echo=FALSE} 
+#Q.Bitte wählen Sie EINE Artengruppe. 
+
+#calculate the frequency of chosen groups
+groups <- data.frame(table(survey_data$Bitte_wählen_Sie_EINE_Artengruppe._))
+
+#remove empty rowss
+groups <- groups %>% filter(!Var1 == "")
+
+#rename columns
+colnames(groups) <- c("Group","Frequency")
+groups$Group <-   str_replace_all(groups$Group, 
+                                  c("Amphibien/Reptilien" = "Amphibians/\nReptiles",
+                                    "Bienen" = "Bees",
+                                    "Käfer" = "Beetles",
+                                    "Libellen" = "Dragonflies",
+                                    "Pflanzen" = "Plants",
+                                    "Schmetterlinge" = "Butterflies/Moths",
+                                    "Sonstiges" = "Others",
+                                    "Vögel" = "Birds"))
+
+okabe <- c('#fde0dd','#fff7f3','#fcc5c0','#f768a1','#fa9fb5','#dd3497','#ae017e','#7a0177')
+
+
+groups <- tibble(
+  Frequency= c(94,  24,  50 , 40, 187,  79 ,140 ,403),
+  Group = c("Amphibians/\nReptiles","Bees","Beetles","Dragonflies","Plants","Butterflies","Others","Birds"),
+  image = c("data/symbols/amphibians.png","data/symbols/bee.png","data/symbols/beetle.png",
+            "data/symbols/dragonfly.png","data/symbols/plant.png","data/symbols/butterfly.png","data/symbols/reptile.png","data/symbols/bird.png"))
+
+groups <- groups %>% mutate(perc = Frequency*100/sum(Frequency))
+
+
+library(ggimage)
+#plot bar chart========================================================================
+(taxa_pref1 <- ggplot(groups, aes(x= fct_reorder(Group, -Frequency), y = Frequency, fill = Group)) + 
+              geom_bar( position = "dodge", stat = "identity",alpha=1, size = 2, show.legend = F)+
+              geom_image(aes(image = image), size = 0.15)+
+              xlab("Taxa preference")+
+              ylab("Count")+ 
+              theme_bw()+
+              coord_flip()+
+              theme( 
+                    panel.grid.major = element_blank(),
+                    panel.grid.minor = element_blank(),
+                    axis.line = element_line(colour = "black"),
+                    axis.text.y = element_text(size = 40, color = "black"), 
+                    axis.text.x = element_text(size = 40, color = "black"),
+                    axis.title.x = element_text(size = 40, color = "black"),   
+                    axis.title.y = element_text(size = 40, color = "black"),
+                    legend.title=element_text(size=40, color = "black"), 
+                    legend.text=element_text(size=38, color = "black"),
+                    panel.border = element_rect(colour = "black", fill=NA, size=0.8))+
+              scale_fill_manual(values = okabe))
+
+########### specialization
+new_groups <- data.frame(group = survey_data$Bitte_wählen_Sie_EINE_Artengruppe._, 
+                         whether_specialised = survey_data$Erfassen_Sie_vorrangig_Beobachtungsdaten_über_eine_bestimmte_Untergruppe_.z.B._eine_Familie._innerhalb_dieser_Artengruppe.)
+
+
+
+new_groups <- new_groups %>% filter(!group == "")
+new_groups <- new_groups %>% filter(!whether_specialised == "")
+new_groups$group <-   str_replace_all(new_groups$group, 
+                                      c("Amphibien/Reptilien" = "Amphibians/\nReptiles",
+                                        "Bienen" = "Bees",
+                                        "Käfer" = "Beetles",
+                                        "Libellen" = "Dragonflies",
+                                        "Pflanzen" = "Plants",
+                                        "Schmetterlinge" = "Butterflies/Moths",
+                                        "Sonstiges" = "Others",
+                                        "Vögel" = "Birds"))
+
+new_groups$whether_specialised <-  str_replace_all(new_groups$whether_specialised, 
+                                                   c("Ich weiß nicht." = "I don't know",
+                                                      "Ja, ich erfasse vorrangig Daten über eine bestimmte Untergruppe." = 
+                                                      "Yes, I collect data on a \nspecific subgroup as a priority",
+                                                      "Nein, ich erfasse nicht vorrangig Daten über eine bestimmte Untergruppe." = 
+                                                      "No, I do not primarily collect \ndata on a specific subgroup"))
+
+
+new_groups <- new_groups %>%
+              group_by(group, whether_specialised) %>%  # grouping by these two variables
+              tally() %>%  # counting the number of responses
+              mutate(perc = n / sum(n) * 100)
+
+#reordering based on previous graph 
+new_groups$group <- factor(new_groups$group, levels = c("Birds","Plants","Others","Amphibians/\nReptiles",
+                                                        "Butterflies","Beetles","Dragonflies","Bees"))
+
+                 
+(taxa_2 <- ggplot(new_groups, aes( y= perc, x= group, 
+                                          fill= factor(whether_specialised,levels = c(
+                                            "Yes, I collect data on a \nspecific subgroup as a priority",
+                                            "I don't know",
+                                            "No, I do not primarily collect \ndata on a specific subgroup"))))+
+                  geom_bar(position="stack", stat="identity", alpha = 0.9, width = 0.5) +
+                  scale_fill_brewer(palette = "YlGnBu", direction = -1) +
+                  coord_flip()+
+                  theme_classic() +
+                  labs(fill = "Response")+
+                  scale_x_discrete(labels = function(x) str_wrap(x, width = 15))+
+                  theme(axis.text.y = element_text(size = 40, color = "black"), 
+                  axis.text.x = element_text(size = 40, color = "black"),
+                  axis.title.x = element_text(size = 40, color = "black"),   
+                  axis.title.y = element_text(size = 40, color = "black"),
+                  legend.title=element_text(size=30, color = "black"), 
+                  legend.text=element_text(size=30, color = "black"),
+                  panel.border = element_rect(colour = "black", fill=NA, size=0.8))+
+                  xlab("")+
+                  ylab("Percentage of respondents (%)"))
+
+```
+
+```{r echo=FALSE, fig.height=8, fig.width=20, message=FALSE, warning=FALSE}
+#treemap to see frquencies of other chosen species groups
+
+
+
+#create a frequency table
+
+groups_others <- data.frame((survey_data$Bitte_wählen_Sie_EINE_Artengruppe.__.Sonstiges.))
+
+#rename columns
+colnames(groups_others) <- c("Group")
+#remove empty rows
+groups_others <- groups_others %>% filter(!Group == "")
+
+
+groups_others$rename <- ifelse(grepl("Insekten",groups_others$Group, ignore.case = T) ,"Insekten", 
+                                ifelse(grepl("Fled",groups_others$Group),"Fleddermäuse",
+                                ifelse(grepl("Dipter",groups_others$Group),"Insekten",
+                                ifelse(grepl("Mollus",groups_others$Group), "Mollusken",
+                                ifelse(grepl("Säug",groups_others$Group),"Säuger",
+                                ifelse(grepl("spinnen",groups_others$Group),"Spinnen",
+                                ifelse(grepl("Vögel",groups_others$Group),"Vögel",
+                                ifelse(grepl("Wildbienen",groups_others$Group),"Wildbienen",
+                                ifelse(grepl("Mollusken; Aquat",groups_others$Group),
+                                            "Mollusken; Aquatische Wirbellose (Makrozoobenthos)",
+                                ifelse(grepl("Mollsuken-D",groups_others$Group) ,"Mollusken", 
+                                ifelse(grepl("Moose Flechten",groups_others$Group),
+                                            "Moose und Flechten",
+                                ifelse(grepl("alle natürlich",groups_others$Group),"Alle",
+                                ifelse(grepl("alle genannten",groups_others$Group),"Alle",
+                                groups_others$Group)))))))))))))
+                                           
+groups_others <- data.frame(table(groups_others$rename))                             
+
+#write.csv(groups_others,"data/groups_others.csv")#change in deepl to english names
+
+english_names <- read.csv("data/groups_others.csv") #use from dropbox
+
+groups_others$eng_group <- english_names$Var1.1
+
+colnames(groups_others) <- c("de_group","Frequency","en_group")
+
+
+#create a treemap=============================================================================
+#png("plots/Please select ONE species group.png")
+
+tm <- treemap(groups_others,
+              index=c("en_group"),
+              vSize="Frequency",
+              vColor = "Frequency",
+              type="value",
+              palette = "RdYlBu",
+              bg.labels=c("white"),
+              title="",
+              fontsize.legend = 30,
+              fontsize.title = 30,
+              fontsize.labels = 15,
+              fontface.labels = 1,
+              inflate.labels=T,
+              fontfamily.title = "mono",
+              align.labels=list(
+               c("center", "center"), 
+               c("right", "bottom")
+             )  
+)            
+#dev.off()
+```
+
+
+```{r fig.width=7, message=FALSE, warning=FALSE, include=FALSE, fig.height=10,fig.width=15}
+
+#Q. Erfassen Sie vorrangig Beobachtungsdaten über eine bestimmte Untergruppe (z.B. eine Familie) innerhalb dieser Artengruppe?
+#create a dataframe for the groups and subgroups
+
+prior_data <- data.frame(prior_data =  survey_data$Erfassen_Sie_vorra, 
+                         subgroup =survey_data$Falls_Ja_._Bitte_spezifizieren_Sie_die_Untergruppe._über_die_Sie_vorrangig_Beobachtungsdaten_erfassen._)
+
+#calculate the frequencies
+
+prior_data <- data.frame(table(prior_data)) %>% filter(Freq >=1)
+
+#remove empty rows
+prior_data <- prior_data %>% filter(!prior_data == "")
+
+prior_data <- prior_data %>% filter(!subgroup == "")
+
+prior_data$subgroup <- gsub("amphibien", "Amphibien", prior_data$subgroup)
+prior_data$subgroup <- gsub("Amphibien ", "Amphibien", prior_data$subgroup)
+prior_data$subgroup <- gsub("Amphibienn", "Amphibien", prior_data$subgroup)
+prior_data$subgroup <- gsub("Amphibienund", "Amphibien und", prior_data$subgroup)
+prior_data$subgroup <- gsub("Kranich", "Kraniche", prior_data$subgroup)
+prior_data$subgroup <- gsub("Curculionidae", "Curculionoidea", prior_data$subgroup)
+prior_data$subgroup <- gsub("Curculionidae", "Curculionoidea", prior_data$subgroup)
+prior_data$subgroup <- gsub("Kranich ", "Kraniche", prior_data$subgroup)
+prior_data$subgroup <- gsub("Kranichee", "Kraniche", prior_data$subgroup)
+prior_data$subgroup <- gsub("Kraniche ", "Kraniche", prior_data$subgroup)
+prior_data$subgroup <- gsub("Kranichezug", "Kraniche", prior_data$subgroup)
+prior_data$subgroup <- gsub("Kreuzkröte ", "Kreuzkröte", prior_data$subgroup)
+prior_data$subgroup <- gsub("Vogel", "Vögel", prior_data$subgroup)
+prior_data$subgroup <- gsub("Salamander", "Salamandridae", prior_data$subgroup)
+prior_data$subgroup <- gsub("Salamandridaeidae", "Salamandridae", prior_data$subgroup)
+
+#write.csv( prior_data,"data/prior_de.csv")
+prior_data <- read.csv("data/prior_de.csv") #this contains translated columns (check dropbox)
+
+#create tree map by transforming variables into fators==============================================
+prior_data <- transform(prior_data, data.available = factor(!is.na(subgroup_eng)), x = 1) 
+
+#wrap the long labels
+prior_data$prior_data <- swr(prior_data$prior_data_eng)
+prior_data$subgroup <- swr(prior_data$subgroup_eng)
+
+library(viridisLite)
+
+(p <- treemap(prior_data,
+              index=c("prior_data_eng","subgroup_eng"),
+              type = "value",
+              vSize="Freq",
+              vColor = "Freq",
+              palette = magma(12),
+              fontsize.title = 15,
+              fontsize.labels=c(16,5),                
+              fontcolor.labels=c("white","black"),
+              fontface.labels = 1,
+              fontfamily.title = "mono",
+              inflate.labels= F,
+              title = "Do you primarily collect observation data on a specific subgroup (e.g. a family) within this species group?",
+              bg.labels=c("black"),
+              align.labels=list(
+               c("center", "center"), 
+               c("center", "center")
+             )  
+)  )          
+            
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE,fig.width=16, fig.height=10, fig.width=15}
+ 
+# make it interactive ("rootname" becomes the title of the plot):
+library(d3treeR)
+
+inter <- d3tree2(p ,  rootname = "Sub groups", width = "150%")
+inter
+
+library(htmlwidgets)
+
+saveWidget(inter, file="D:/github/Citizen_science_manuscript/data/figures/interactiveTreemap.html",selfcontained=TRUE,
+           knitrOptions=list())
+
+```
+
+
+ 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#Q. all questions
+## The following chunk will generate a series of questions 
+## that are will later be used to generate separate plots 
+## for each species group
+
+# plants 
+library(janitor)
+#use the following approach for all the species group chosen by the participants above
+#find the strings related to the species group
+#reshape the dataset
+# remove empty rows
+
+plants <- data.frame(survey_data[,grepl("Pflanzen", names(survey_data)) ])
+plants <- as.data.frame(lapply(plants, factor))
+plants$species_group <- "Pflanzen"
+
+plants <- plants %>% gather(Question, Response, 1:30)
+plants <- plants %>% filter(!Response == "")
+plants <- plants %>% filter(!Response == "N/A")
+#unique(plants$Response)
+
+
+########################################################
+
+bees <- data.frame(survey_data[,grepl("Bienen", names(survey_data)) ])
+bees <- as.data.frame(lapply(bees, factor))
+bees$species_group <- "Bienen"
+
+bees <- bees %>% gather(Question, Response, 1:36)
+bees <- bees %>% filter(!Response == "")
+bees <- bees %>% filter(!Response == "N/A")
+#unique(bees$Response)
+
+
+################################################
+butterflies <- data.frame(survey_data[,grepl("Schmetterling", names(survey_data))])
+butterflies <- as.data.frame(lapply(butterflies, factor))
+butterflies$species_group <- "Schmetterling"
+
+butterflies <- butterflies %>% gather(Question, Response, 1:36)
+butterflies <- butterflies %>% filter(!Response == "")
+butterflies <- butterflies %>% filter(!Response == "N/A")
+#unique(butterflies$Response)
+
+
+############################################################
+
+Amp_rept <- data.frame(survey_data[,grepl("Amphibien.Reptilien", names(survey_data))])
+Amp_rept <- as.data.frame(lapply(Amp_rept, factor))
+Amp_rept$species_group <- "Amphibien.Reptilien"
+
+Amp_rept <- Amp_rept %>% gather(Question, Response, 1:31)
+Amp_rept <- Amp_rept %>% filter(!Response == "")
+Amp_rept <- Amp_rept %>% filter(!Response == "N/A")
+#unique(Amp_rept$Response)
+
+
+#########################################################
+
+dragonflies <- data.frame(survey_data[,grepl("Libellen", names(survey_data))])
+dragonflies  <- as.data.frame(lapply(dragonflies , factor))
+dragonflies $species_group <- "Libellen"
+
+dragonflies  <- dragonflies  %>% gather(Question, Response, 1:36)
+dragonflies  <- dragonflies  %>% filter(!Response == "")
+dragonflies  <- dragonflies  %>% filter(!Response == "N/A")
+#unique(dragonflies $Response)
+
+
+###########################################################
+
+birds <- data.frame(survey_data[,grepl("Vögel", names(survey_data))])
+
+birds  <- as.data.frame(lapply(birds , factor))
+birds$species_group <- "Vögel"
+
+birds  <- birds  %>% gather(Question, Response, 1:38)
+birds  <- birds  %>% filter(!Response == "")
+birds  <- birds  %>% filter(!Response == "N/A")
+#unique(birds $Response)
+
+#########################################################
+
+beetles <- data.frame(survey_data[,grepl("Käfer", names(survey_data))])
+beetles <- as.data.frame(lapply(beetles, factor))
+beetles$species_group <- "Käfer"
+
+beetles <- beetles %>% gather(Question, Response, 1:36)
+beetles <- beetles %>% filter(!Response == "")
+beetles <- beetles %>% filter(!Response == "N/A")
+#unique(beetles$Response)
+
+############################################################
+#assign them to one list and generate a data frame
+
+list <- list(plants,bees,dragonflies,beetles,birds,Amp_rept,butterflies)
+all_questions <- data.frame(do.call(rbind, list))
+all_questions$species_group <-as.factor(all_questions$species_group)
+
+all_questions$species_group <- str_replace_all(all_questions$species_group,
+                                              c("Amphibien.Reptilien" = "Amphibians/Reptiles",
+                                                "Bienen" = "Bees",
+                                                "Käfer" = "Beetles",
+                                                "Libellen" = "Dragonflies",
+                                                "Schmetterling" = "Butterflies",
+                                                "Vögel" = "Birds",
+                                                "Pflanzen" = "Plants"))
+
+
+##############################################################
+## separate out all the questions using string detect feature of the dplyr package
+#write.csv(all_questions, "data/all_questions.csv")
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.height=8, fig.width=10}
+
+#now plot each question accordingly
+
+#to make the plots a bit tidier
+#remove the extra strings and keep only the relevant parts
+#use this approach in all 
+
+ques1 <- all_questions %>% filter(str_detect(Question, 'Welche_Plattform_oder_Plattformen_'))
+
+ques1$platform <- gsub(pattern = "Welche_Plattform_oder_Plattformen_nutzen_Sie_hauptsächlich_zur_Einreichung_Ihrer_","", ques1$Question)
+
+ques1$platform <- gsub(pattern = "Amphibien.Reptilien.Beobachtungen._.","",ques1$platform) 
+ques1$platform <- gsub(pattern = "Bienen_.Beobachtungen._.","",ques1$platform)
+ques1$platform <- gsub(pattern = "Käfer.Beobachtungen._","",ques1$platform)
+ques1$platform <- gsub(pattern = "Libellen.Beobachtungen._.","",ques1$platform)
+ques1$platform <- gsub(pattern = "Pflanzen.Beobachtungen._.","",ques1$platform)
+ques1$platform <- gsub(pattern = "Schmetterling.Beobachtungen._.","",ques1$platform)
+ques1$platform <- gsub(pattern = "Vögel_.Beobachtungen._.","",ques1$platform)
+
+ques1$platform <- as.factor(gsub("\\.", "", ques1$platform))
+ques1$platform <- as.factor(gsub("\\_", " ", ques1$platform))
+
+ques1_sonstiges <- ques1 %>% filter(platform == "Sonstiges")
+ques1 <- ques1 %>% filter(platform != "Sonstiges")
+
+ques1 <-ques1 %>% 
+        group_by(platform , species_group, Response) %>% 
+        summarise(Frequency = table(Response))
+                            
+ques1$species_group <-   str_replace_all(ques1$species_group,
+                                         c("Amphibien.Reptilien" = "Amphibians/Reptiles",
+                                           "Bienen" = "Bees",
+                                           "Käfer" = "Beetles",
+                                           "Libellen" = "Dragonflies",
+                                           "Pflanzen" = "Plants",
+                                           "Schmetterling" = "Butterflies",
+                                           "Sonstiges" = "Others",
+                                           "Vögel" = "Birds") )
+
+ques1_1 <- ques1 %>% spread(Response,Frequency)
+
+ques1_1$total <- ques1_1$Ja+ques1_1$Nein
+
+ques1_1 <- ques1_1 %>% mutate(prop_ja = Ja/total,
+                              prop_nein = Nein/total )
+#assign the title
+title <- c("Which platform or platforms do you \nmainly use to submit your bee observations")
+
+
+ques1$Response <- str_replace_all(ques1$Response, c("Ja" = "Yes", "Nein" = "No"))
+ques1$platform <- str_replace_all(ques1$platform, c("Ich benutze keine Plattform" = "I don't use a platform"))
+
+
+#alluvial plot===========================================================================
+
+(alluvial <-ggplot(data = ques1,aes(axis1 = platform, axis2 = species_group, axis3 = Response, y = Frequency)) +
+            scale_x_discrete(limits = c("Platform", "Species group", "Response"), expand = c(.2, .05)) +
+            xlab("") +
+            geom_alluvium(aes(fill = Response)) + 
+            geom_flow(width = 1/12) +
+            geom_stratum(alpha = .5, width = 1/4) +
+            ggfittext::geom_fit_text(stat = "stratum", aes(label = after_stat(stratum),width = 5, min.size = 1))+
+            theme_classic()+theme(axis.text.y = element_text(size = 20, color = "black"), 
+            axis.text.x = element_text(size = 20, color = "black"),
+            axis.title.x = element_text(size = 20, color = "black"),   
+            axis.title.y = element_text(size = 20, color = "black"),
+            legend.title=element_text(size=20, color = "black"), 
+            legend.text=element_text(size=18, color = "black"),
+            panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+  
+
+            
+```
+
+
+```{r}
+#Wie_viele_der_Beobachtungen_Ihrer_ausgewählten_Artengruppe_die_Sie_im_Frühling_und_Sommer_2020_gemeldet_haben._waren....."        
+
+ques3_selected_groups <-  data.frame(survey_data[,grepl("Wie_viele_der_Beobachtungen_Ihrer_ausgewählten_Artengruppe", 
+                                                        names(survey_data))])
+
+colnames(ques3_selected_groups) <- gsub("Wie_viele_der_", "", colnames(ques3_selected_groups))
+colnames(ques3_selected_groups) <- gsub(pattern = 
+                                  "Beobachtungen_Ihrer_ausgewählten_Artengruppe._die_Sie_im_Frühling_und_Sommer_2020_gemeldet_haben._waren.__."," ", 
+                                  colnames(ques3_selected_groups))
+
+colnames(ques3_selected_groups) <- gsub("_"," ", colnames(ques3_selected_groups))
+
+ques3_selected_groups <- ques3_selected_groups %>% filter(!` oder zufällige Beobachtungen .ohne aktive Suche..` == "")
+
+ques3_selected_groups <- ques3_selected_groups %>%
+	                       gather(key = Question, value = Response, 1:3) 
+
+
+ques3_sel_wide <- ques3_selected_groups %>%
+	                group_by(Question, Response) %>%  # grouping by these two variables
+	                tally() %>%  # counting the number of responses
+	                mutate(perc = n / sum(n) * 100) %>%
+	                dplyr::select(-n) %>%
+	                group_by(Question) %>%
+	                spread(Response, perc)
+
+ques3_sel_hi_lo <- ques3_sel_wide %>%
+	                 gather(key = response, value = perc, 2:6) 
+
+ques3_sel_hi_lo$response <-   str_replace_all(ques3_sel_hi_lo$response, c(c("alle" = "all",
+                                                                            "die meisten"= "most",
+                                                                            "einige" = "some",
+                                                                            "wenige" = "few",
+                                                                            "keine" = "none")) )
+
+ques3_sel_hi_lo$response <- factor(ques3_sel_hi_lo$response, levels = c("all", "most", "some", "few", "none"))
+
+ques3_sel_hi_lo$Question <- str_replace_all(ques3_sel_hi_lo$Question, 
+                                            c("das Resultat einer aktiven Suche .Sie sind zum Beispiel an einen bestimmten Ort gefahren. um gezielt nach Arten zu suchen. ." = "the result of an active search (for 
+                                              example, you drove to a specific location to specifically look for species)",
+                                              " oder aus aufgestellten Fallen ."  = "or from traps set up",
+                                              " oder zufällige Beobachtungen .ohne aktive Suche.." = 
+                                              "or random observations without active search"))    
+
+ques3_sel_hi_lo$Question <- swr(ques3_sel_hi_lo$Question)
+
+
+ques3_sel_hi_lo$Question <- swr(ques3_sel_hi_lo$Question)
+ 
+(ques3_plot <- ggplot(ques3_sel_hi_lo, aes(fill= response, y= perc, x=Question)) + 
+                  geom_bar(position="stack", stat="identity", width =0.5) +
+                  scale_fill_brewer(palette = "YlGnBu", direction = -1) +
+                  coord_flip()+
+                  theme_classic() +
+                  xlab("")+
+                  ylab("Percentage")+
+                  labs(fill = "Response")+
+                  scale_x_discrete(labels = function(x) str_wrap(x, width = 33))+
+                  theme(axis.text.y = element_text(size = 20, color = "black"), 
+                        axis.text.x = element_text(size = 20, color = "black"),
+                        axis.title.x = element_text(size = 20, color = "black"),   
+                        axis.title.y = element_text(size = 20, color = "black"),
+                        legend.title=element_text(size=20, color = "black"), 
+                        legend.text=element_text(size=18, color = "black"),
+                        panel.border = element_rect(colour = "black", fill=NA, size=0.8))+
+                 labs(fill = "Response") + 
+                 xlab("")+
+                ylab("Percentage of respondents (%)"))
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=10}
+
+ques4 <- all_questions %>% 
+        filter(str_detect(Question, 'Wenn_Sie_aktiv_auf_die_Suche_nach|_gegangen_sind,_wie_lange_suchten_Sie_typischerweise'))
+
+#ques4 is divided into two parts
+#find the pattern
+#remove extra strings
+
+ques4a <- ques4 %>% filter(str_detect(Question, 'wie_lange_suchten_Sie_typischerweise'))
+
+ques4a$Question <- gsub("Wenn_Sie_aktiv_auf_die_Suche_nach.","",ques4a$Question)
+ques4a$Question <- gsub(pattern = "_gegangen_sind._wie_lange_suchten_Sie_typischerweise.__.","",ques4a$Question)
+ques4a$Question <- gsub(pattern = "Amphibien.Reptilien","",ques4a$Question) 
+ques4a$Question <- gsub(pattern = "Bienen","",ques4a$Question)
+ques4a$Question <- gsub(pattern = "Käfer","",ques4a$Question)
+ques4a$Question <- gsub(pattern = "Libellen","",ques4a$Question)
+ques4a$Question <- gsub(pattern = "Pflanzen","",ques4a$Question)
+ques4a$Question <- gsub(pattern = "Schmetterlingen","",ques4a$Question)
+ques4a$Question <- gsub(pattern = "Vögel","",ques4a$Question)
+
+#assign title
+#title <- c("If you actively searched for your selected species group, how long did you typically search?")
+
+
+#converting stunden to minuten
+ques4a$Response <- as.numeric(ques4a$Response)
+ques4a$new <- ifelse(ques4a$Question == "in_Stunden.", ques4a$Response*60,ques4a$Response)
+ 
+ques4a$Question <- gsub("in_Stunden.","Minuten", ques4a$Question)
+ques4a$Question <- gsub("oder_in_Minuten.","Minuten", ques4a$Question)
+ 
+
+#put the results in a category to make the representation easier
+
+#remove NAs
+ques4a <- ques4a %>% drop_na()
+ques4a <- ques4a %>% filter(!new == "0")
+ques4a <- data.frame(species_group = ques4a$species_group, duration = ques4a$new)
+ques4a$levels <- ifelse(ques4a$duration <= 100, "1-100",
+                         ifelse((ques4a$duration > 100 & ques4a$duration <= 500) , "101-500",
+                         ifelse((ques4a$duration > 500 & ques4a$duration <= 1000) , "501-1000",
+                         ifelse((ques4a$duration > 1000 & ques4a$duration <= 5000) , "1001-5000",
+                         ifelse((ques4a$duration > 5000 & ques4a$duration <= 10000), "5001-10000",
+                         ifelse((ques4a$duration > 10000 & ques4a$duration <= 20000), "10001-20000",
+                         ifelse((ques4a$duration > 20000), " > 20000",ques4a$duration)))))))
+
+#create a tally and reorder the levels
+
+ques4a <- ques4a %>% group_by(species_group,duration, levels) %>% tally()
+ques4a <- ques4a %>%
+          mutate(levels = factor(levels, levels=c("1-100","101-500","501-1000","1001-5000","5001-10000","10001-20000"," > 20000")))
+
+ques4a <- ques4a %>% group_by(levels) %>%  mutate(prop = n/sum(n)*100)
+ques4a$species_group <-   str_replace_all(ques4a$species_group, 
+                                          c("Amphibien.Reptilien" = "Amphibians/\nReptiles",
+                                            "Bienen" = "Bees",
+                                            "Käfer" = "Beetles",
+                                            "Libellen" = "Dragonflies",
+                                            "Pflanzen" = "Plants",
+                                            "Schmetterling" = "Butterflies",
+                                            "Sonstiges" = "Others",
+                                            "Vögel" = "Birds"))
+
+
+#plot a chart=====================================================================
+
+ques4a$species_group <- factor(ques4a$species_group, levels = c("Birds","Plants","Amphibians/Reptiles",
+                                                                "Butterflies","Beetles","Dragonflies","Bees"))
+
+
+(ques4a_plot <- ggplot(ques4a, aes( x= species_group,fill = levels, na.rm = TRUE)) + 
+                geom_bar() +
+                scale_fill_brewer(palette = "YlGn") +
+                theme_classic() +
+                theme(axis.text.y = element_text(size = 20, color = "black"), 
+                      axis.text.x = element_text(size = 20, color = "black"),
+                      axis.title.x = element_text(size = 20, color = "black"),   
+                      axis.title.y = element_text(size = 20, color = "black"),
+                      legend.title=element_text(size=20, color = "black"), 
+                      legend.text=element_text(size=18, color = "black"),
+                      panel.border = element_rect(colour = "black", fill=NA, size=0.8))+
+                labs(fill = "Minutes") + 
+                xlab("Species groups")+
+                ylab("Number of responses")+
+                coord_flip())
+
+
+#ques4a_plot <- ques4a_plot+ggtitle(title)
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=10}
+
+#part two of question 4
+#detect string and remove extra strings
+
+ques4b <- ques4 %>% filter(str_detect(Question, 'wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen'))
+
+ques4b$Question <- gsub("Wenn_Sie_aktiv_auf_die_Suche_nach.","",ques4b$Question)
+ques4b$Question <- gsub("_gegangen_sind._wie_sind_Sie_bei_der_Sammlung_von_Beobachtungen_vorgegangen._.","",ques4b$Question)
+#ques4b$Question <- gsub(""," ", ques4b$Question)
+#ques4b$Question <- gsub(".__."," ", ques4b$Question)
+
+ques4b$Question <- gsub(pattern = "Amphibien.Reptilien","",ques4b$Question) 
+ques4b$Question <- gsub(pattern = "Bienen","",ques4b$Question)
+ques4b$Question <- gsub(pattern = "Käfer","",ques4b$Question)
+ques4b$Question <- gsub(pattern = "Libellen","",ques4b$Question)
+ques4b$Question <- gsub(pattern = "Pflanzen.","",ques4b$Question)
+ques4b$Question <- gsub(pattern = "Schmetterlingen","",ques4b$Question)
+ques4b$Question <- gsub(pattern = "Vögel","",ques4b$Question)
+ques4b$Question <- gsub("_"," ", ques4b$Question)
+
+
+
+ques4b <- ques4b[,-c(1)]
+
+ques4b_wide <- ques4b %>%
+	             group_by(Question, Response) %>%  # grouping by these two variables
+	             tally() %>%  # counting the number of responses
+	             mutate(perc = n / sum(n) * 100) %>%
+	             dplyr::select(-n) %>%
+	             group_by(Question) %>%
+	             spread(Response, perc)
+
+
+ques4b_hi_lo <- ques4b_wide %>%
+	              dplyr::select(Question,manchmal, nie,oft, `sehr oft`,`selten`,`weiß nicht`) %>%
+	              gather(key = response, value = perc, 2:7) 
+
+ques4b_hi_lo$Question <- sub("\\..", "", ques4b_hi_lo$Question)
+ques4b_hi_lo$Question <- sub("\\..", "", ques4b_hi_lo$Question)
+colnames(ques4b_hi_lo) <-c("Question", "response", "perc")
+
+library(stringr)
+
+ques4b_hi_lo$response <- str_replace_all(ques4b_hi_lo$response,
+                                         c("sehr oft" = "very often" ,
+                                           "oft" = "often" ,
+                                          "manchmal" = "sometimes" ,
+                                          "selten" = "rarely",
+                                          "nie" = "never",
+                                          "weiß nicht" = "don't know"))
+
+ques4b_hi_lo$response <- str_replace_all(ques4b_hi_lo$response, c("very oftenen" = "very often")) #recheck "often" spelling
+
+ques4b_hi_lo$Question <- str_replace_all(ques4b_hi_lo$Question,
+                       c("Ich erfasse alle Artendie ich gesehen habe" = "I record all the species I have seen",
+                          "Ich erfasse nur die Artendie ich interessant finde" = 
+                          "I record only the species I find interesting",         
+                          "Ich erfasse nur häufige Arten" =  "I record only common species",                                           
+                          "Ich erfasse nur seltene Arten"  = "I record only rare species" ,                                           
+                          "Ich habe eine Checkliste mit den zu erwartenden Arten und sehe die Liste durch." = 
+                          "I have a checklist of species to expect and review the list"))
+
+levels <- c("very often", "often", "sometimes", "rarely", "never", "don't know")
+
+ques4b_hi_lo$response <- factor(ques4b_hi_lo$response, levels= levels)
+
+ques4b_hi_lo$Question <- swr(ques4b_hi_lo$Question)
+
+(ques4b_plot_new <- ggplot(ques4b_hi_lo, aes(fill= response, y= perc, x=Question)) + 
+                    geom_bar(position="stack", stat="identity", width = 0.5) +
+                    scale_fill_brewer(palette = "BrBG", direction = -1) +
+                    coord_flip()+
+                    theme_classic() +
+                    theme(axis.text.y = element_text(size = 40, color = "black"), 
+                          axis.text.x = element_text(size = 40, color = "black"),
+                          axis.title.x = element_text(size = 40, color = "black"),   
+                          axis.title.y = element_text(size = 40, color = "black"),
+                          legend.title=element_text(size=40, color = "black"), 
+                          legend.text=element_text(size=38, color = "black"),
+                          panel.border = element_rect(colour = "black", fill=NA, size=0.8))+
+                    labs(fill = "Response") + 
+                    xlab("")+
+                    ylab("Percentage of respondents(%)"))
+
+```
+
+
+
+```{r echo=FALSE, fig.height=10, fig.width=10, message=FALSE, warning=FALSE}
+
+ques5 <- all_questions %>% filter(str_detect(Question, 'Was_veranlasst_Sie_dazu'))
+
+#detect string and remove extra strings
+
+ques5$Question <- gsub("Was_veranlasst_Sie_dazu._eine_","",ques5$Question)
+
+ques5$Question <- gsub(".Beobachtung_zu_melden._wenn_Sie_eine_Art_zufällig_sehen_.ohne_aktive_Suche.._Bitte_geben_Sie_an._wie_oft_die_folgenden_Gründe_bei_Ihnen_zur_Meldung_einer_Beobachtung_führen._.",
+                       " ",ques5$Question)
+
+ques5$Question <- gsub(pattern = "Amphibien.Reptilien","",ques5$Question) 
+ques5$Question <- gsub(pattern = "Bienen","",ques5$Question)
+ques5$Question <- gsub(pattern = "Käfer","",ques5$Question)
+ques5$Question <- gsub(pattern = "Libellen","",ques5$Question)
+ques5$Question <- gsub(pattern = "Pflanzen","",ques5$Question)
+ques5$Question <- gsub(pattern = "Schmetterling","",ques5$Question)
+ques5$Question <- gsub(pattern = "Vögel","",ques5$Question)
+ques5$Question <- gsub(pattern = "\\_"," ",ques5$Question)
+ques5$Question <- gsub(pattern = "\\.","",ques5$Question)
+
+ques5$species_group <-   str_replace_all(ques5$species_group, 
+                                         c("Amphibien.Reptilien" = "Amphibians/Reptiles",
+                                          "Bienen" = "Bees",
+                                          "Käfer" = "Beetles",
+                                          "Libellen" = "Dragonflies",
+                                          "Pflanzen" = "Plants",
+                                          "Schmetterling" = "Butterflies",
+                                          "Sonstiges" = "Others",
+                                          "Vögel" = "Birds"))
+
+ques5$Response <- str_replace_all(ques5$Response, 
+                                  c("sehr oft" = "very often",
+                                    "oft" = "often",
+                                    "manchmal" = "sometimes" ,
+                                    "selten" = "rarely",
+                                    "nie" = "never",
+                                    "weiß nicht" = "don't know"))
+
+ques5$Response <- str_replace_all(ques5$Response, c("very oftenen" = "very often")) #recheck the spelling of "often"
+
+unique(ques5$Question)
+ques5$Question <- str_replace_all(ques5$Question, 
+                                  c(" Ich sehe die Art an einem Ort an dem ich sie nicht erwartet habe" = 
+                                    "I see the species in a place where I did not expect it",
+                                    " Ich sehe die Art zum ersten Mal in diesem Jahr"  = 
+                                    "I see the species for the first time this year",         
+                                    " Ich sehe eine Art die ich interessant finde" = 
+                                    "I see a species that I find interesting",                   
+                                    " Ich sehe eine Art die ich nicht kenne" = 
+                                    "I see a species I don't know",                          
+                                    " Ich sehe eine seltene Art" = "I see a rare species" ,                                       
+                                    " Ich sehe viele Arten zur gleichen Zeit" = 
+                                    "I see many species at the same time" ,                         
+                                    " Ich sehe viele Individuen der gleichen Art" = 
+                                    "I see many individuals of the same species"))
+
+
+ques5 <- ques5 %>%
+          mutate(Response = factor(Response, 
+          levels=c("very often", "often", "sometimes", "rarely", "never", "don't know")))
+
+
+ques5 <- ques5[,-c(1)]
+
+ques5_wide <- ques5 %>%
+	            group_by(Question, Response) %>%  # grouping by these two variables
+	            tally() %>%  # counting the number of responses
+	            mutate(perc = n / sum(n) * 100) %>%
+	            dplyr::select(-n) %>%
+	            group_by(Question) %>%
+	            spread(Response, perc)
+
+
+ques5_hi_lo <- ques5_wide %>%
+	             dplyr::select(Question,`very often`, `often`, `sometimes`, `rarely`, `never`, `don't know`) %>%
+	             gather(key = response, value = perc, 2:7) 
+
+colnames(ques5_hi_lo) <-c("Question", "response", "perc")
+
+levels <-c("very often", "often", "sometimes", "rarely", "never", "don't know")
+
+ques5_hi_lo$response <- factor(ques5_hi_lo$response, levels= levels)
+
+(ques5_plot_new <- ggplot(ques5_hi_lo, aes(fill= response, y= perc, x=Question)) + 
+                   geom_bar(position="stack", stat="identity", width = 0.7) +
+                  scale_fill_brewer(palette = "BrBG", direction = -1) +
+                  coord_flip()+
+                  theme_classic() +
+                  xlab("")+
+                  ylab("Percentage")+
+                  labs(fill = "Response")+
+                  scale_x_discrete(labels = function(x) str_wrap(x, width = 15))+
+                  theme(axis.text.y = element_text(size = 40, color = "black"), 
+                        axis.text.x = element_text(size = 40, color = "black"),
+                        axis.title.x = element_text(size = 40, color = "black"),   
+                        axis.title.y = element_text(size = 40, color = "black"),
+                        legend.title=element_text(size=40, color = "black"), 
+                        legend.text=element_text(size=38, color = "black"),
+                        panel.border = element_rect(colour = "black", fill=NA, size=0.8))+
+                  labs(fill = "Response") + 
+                  xlab("")+
+                  ylab("Percentage of respondents (%)"))
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ques6 <- all_questions %>% filter(str_detect(Question, 'Wenn_Sie_eine_|_verwendet_haben,wie_lang_war_typischerweise_das_Erfassungs-Zeitfenster?')) 
+
+#detect string and remove extra strings
+
+ques6$Question <- gsub("Wenn_Sie_eine_","",ques6$Question)
+ques6$Question <- gsub(".Falle_verwendet_haben.wie_lang_war_typischerweise_das_Erfassungs.Zeitfenster.__."," ",ques6$Question)
+ques6$Question <- gsub(pattern = "Käfer","",ques6$Question)
+ques6$Question <- gsub(pattern = "Amphibien.Reptilien","",ques6$Question) 
+ques6$Question <- gsub(pattern = "Schmetterlings","",ques6$Question)
+ques6$Question <- gsub(pattern = "Bienen","",ques6$Question)
+ques6$Question <- gsub(pattern = "Vögel","",ques6$Question)
+ques6$Question <- gsub(pattern = "Libellen","",ques6$Question)
+ques6$Question <- gsub(pattern = "Pflanzen","",ques6$Question)
+
+#put the responses in categories
+
+ques6$Response <- as.numeric(ques6$Response)
+
+ques6$Response <- ifelse(ques6$Question == " in_Tagen.", ques6$Response*24,ques6$Response)
+ques6$Question <- gsub(" in_Tagen.", "in Stunden", ques6$Question)
+ques6$Question <- gsub(" oder_in_Stunden.", "in Stunden", ques6$Question)
+
+ques6$levels <- ifelse(ques6$Response <= 10, "1-10",
+                      ifelse((ques6$Response >10 & ques6$Response<= 50) , "10-50",
+                      ifelse((ques6$Response >50 & ques6$Response<= 100), "50-100",
+                      ifelse((ques6$Response >100 & ques6$Response<= 200), "100-200",
+                      ifelse((ques6$Response >200 & ques6$Response<= 300), "200-300",
+                      ifelse((ques6$Response >300 & ques6$Response<= 400), "300-400",ques6$Response))))))
+
+#create a tally and reorder the levels
+
+ques6 <- ques6 %>%
+          group_by(Question, species_group, levels) %>% 
+          tally() %>% 
+          mutate(levels = factor(levels, levels=c("1-10","10-50","50-100","100-200","200-300","300-400")))
+
+#remove NAs
+ques6 <- ques6 %>% drop_na()
+ques6 <- ques6[,-1]
+#plot chart=====================================================================
+
+ques6$species_group <- factor(ques6$species_group, levels = c("Amphibians/Reptiles","Butterflies","Birds","Beetles"))
+
+
+(ques6_plot <- ggplot(ques6, aes(fill=levels, y= n, x=species_group)) + 
+              geom_bar(position="stack", stat="identity", width = 0.5) +
+              scale_fill_brewer(palette = "RdBu") +
+              coord_flip()+
+              theme_classic() +
+              theme(axis.text.y = element_text(size = 20, color = "black"), 
+                    axis.text.x = element_text(size = 20, color = "black"),
+                    axis.title.x = element_text(size = 20, color = "black"),   
+                    axis.title.y = element_text(size = 20, color = "black"),
+                    legend.title=element_text(size=20, color = "black"), 
+                    legend.text=element_text(size=18, color = "black"),
+                    panel.border = element_rect(colour = "black", fill=NA, size=0.8))+
+              labs(fill = "Hours") + 
+              xlab("Species group")+
+              ylab("Number of responses"))
+
+      
+#ques6_plot <- ques6_plot+ggtitle("If you used a XXX trap,how long was \ntypically the capture time window?")
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ques7 <- all_questions %>% filter(str_detect(Question, 'Welche_Typen_von_|_verwenden_Sie'))                           
+
+#detect strings and remove extra strings
+
+ques7$Question <- gsub("Welche_Typen_von_","",ques7$Question)
+ques7$Question <- gsub(".verwenden_Sie._.Bitte_trennen_Sie_diese_jeweils_mit_einem_Komma.__"," ",ques7$Question)
+ques7$Question <- gsub(pattern = "Käfer.","",ques7$Question)
+ques7$Question <- gsub(pattern = "Amphibien.Reptilien.","",ques7$Question) 
+ques7$Question <- gsub(pattern = "Schmetterlings.","",ques7$Question)
+ques7$Question <- gsub(pattern = "Pflanzen.","",ques7$Question)
+ques7$Question <- gsub(pattern = "Schmetterlings.","",ques7$Question)
+ques7$Question <- gsub(pattern = "Libellen.","",ques7$Question)
+ques7$Question <- gsub(pattern = "Bienen.","",ques7$Question)
+ques7$Question <- gsub(pattern = "Vögel.","",ques7$Question)
+
+
+#create a frequency table
+ques7 <-ques7 %>% 
+        group_by(Question , species_group, Response) %>% 
+        summarise(Frequency = table(Response))
+
+
+# draw a word cloud=========================================================================
+
+#Create a vector containing only the text
+
+text <- ques7$Response
+text <- read.csv("data/types_of_traps.csv") #from dropbox
+text <- data.frame(response = text$Response.1)
+text$response <- gsub(pattern = "camphibian","amphibian",text$response)
+text$response <- gsub(pattern = "trap","traps",text$response)
+text$response <- gsub(pattern = "trapss","traps",text$response)
+
+
+# Create a corpus  
+docs <- Corpus(VectorSource(text))
+docs <- docs %>%
+        tm_map(removeNumbers) %>%
+        tm_map(removePunctuation) %>%
+        tm_map(stripWhitespace)
+
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removeWords, stopwords("german"))
+
+dtm <- TermDocumentMatrix(docs) 
+matrix <- as.matrix(dtm) 
+words <- sort(rowSums(matrix),decreasing=TRUE) 
+df <- data.frame(word = names(words),freq=words)
+
+#png("plots/Which_types_of_XXX_traps_do_you_use.png", width=12, height=8, units="in", res=300)
+
+wc_traps <- wordcloud(words = df$word, freq = df$freq, min.freq = 1,           
+            max.words=400, random.order=FALSE, rot.per=0.35,scale = c(14,2),         
+            colors=brewer.pal(8, "Dark2"))
+#dev.off()
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=10}
+
+ques8 <- all_questions %>% filter(str_detect(Question, 'Nach_welchem_Schema_erfassen_Sie_die_mit_der_|_gefangenen_Arten?'))
+
+
+#detect string and remove extra strings
+
+ques8$Question <- gsub("Nach_welchem_Schema_erfassen_Sie_die_mit_der_","",ques8$Question)
+ques8$Question <- gsub(".Falle_gefangenen_Arten.__."," ",ques8$Question)
+ques8$Question <- gsub(pattern = "Käfer.","",ques8$Question)
+ques8$Question <- gsub(pattern = "Amphibien.Reptilien.","",ques8$Question) 
+ques8$Question <- gsub(pattern = "Schmetterlings.","",ques8$Question)
+ques8$Question <- gsub(pattern = "Pflanzen.","",ques8$Question)
+ques8$Question <- gsub(pattern = "Schmetterlings.","",ques8$Question)
+ques8$Question <- gsub(pattern = "Libellen.","",ques8$Question)
+ques8$Question <- gsub(pattern = "Vögel.","",ques8$Question)
+ques8$Question <- gsub(pattern = "Bienen.","",ques8$Question)
+ques8$Question <- gsub(pattern = "Falle gefangenen Arten ","", ques8$Question)
+ques8$Question <- gsub(pattern = "\\_"," ",ques8$Question)
+ques8$Question <- gsub(pattern = "\\.","",ques8$Question)
+
+
+ques8$Question <- gsub(pattern = "Falle gefangenen Arten ","", ques8$Question)
+
+#sort the variables in order
+ques8$Response <- as.factor(ques8$Response)
+ques8$Response <- str_replace_all(ques8$Response, 
+                                  c("sehr oft" = "very often" ,
+                                    "oft" = "often" ,
+                                    "manchmal" = "sometimes" ,
+                                    "selten" = "rarely",
+                                    "nie" = "never",
+                                    "weiß nicht" = "don't know"))
+
+ques8$Response <- str_replace_all(ques8$Response, c("very oftenen" = "very often"))
+levels <- c("very often", "often", "sometimes", "rarely", "never", "don't know")
+
+ques8$Question <- str_replace_all(ques8$Question,
+                                  c("Ich erfasse alle Arten" = "I record all species",                                      
+                                    "Ich erfasse nur die Arten die ich interessant finde" = 
+                                    "I only record the species I find interesting",         
+                                    "Ich erfasse nur häufige Arten"  = 
+                                    "I only record common species" ,                              
+                                    "Ich erfasse nur seltene Arten"  = 
+                                    "I only record rare species" ,                              
+                                    "Ich erfasse nur Arten die noch nicht in meiner Sammlung sind" = 
+                                    "I only record species that are not yet in my collection"))
+  
+
+########################
+
+ques8 <- ques8[,-c(1)]
+
+ques8_wide <- ques8 %>%
+	            group_by(Question, Response) %>%  # grouping by these two variables
+	            tally() %>%  # counting the number of responses
+	            mutate(perc = n / sum(n) * 100) %>%
+	            dplyr::select(-n) %>%
+	            group_by(Question) %>%
+	            spread(Response, perc)
+
+
+ques8_hi_lo <- ques8_wide %>%
+	             dplyr::select(Question,`very often`, `often`,`sometimes`,`rarely`,`never`,`don't know`) %>%
+              gather(key = response, value = perc, 2:7) 
+
+colnames(ques8_hi_lo) <-c("Question", "response", "perc")
+
+ques8_hi_lo$response <- factor(ques8_hi_lo$response, levels= levels)
+
+(ques8_plot_new <- ggplot(ques8_hi_lo, aes(fill= response, y= perc, x=Question)) + 
+                    geom_bar(position="stack", stat="identity", width = 0.5) +
+                    scale_fill_brewer(palette = "BrBG", direction = -1) +
+                    coord_flip()+
+                    xlab("")+ 
+                    ylab("Percentage of respondents (%)")+
+                    labs(fill = "Response")+
+                    scale_x_discrete(labels = function(x) str_wrap(x, width = 17))+
+                    theme_classic() +
+                    theme(axis.text.y = element_text(size = 20, color = "black"), 
+                          axis.text.x = element_text(size = 20, color = "black"),
+                          axis.title.x = element_text(size = 20, color = "black"),   
+                          axis.title.y = element_text(size = 20, color = "black"),
+                          legend.title=element_text(size=20, color = "black"), 
+                          legend.text=element_text(size=18, color = "black"),
+                          panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ques9 <- all_questions %>% filter(str_detect(Question, 'Was_tun_Sie._wenn_Sie_sich_bei_der_Bestimmung'))
+
+#detect string and remove extra strings
+
+ques9$Question <- gsub("Was_tun_Sie._wenn_Sie_sich_bei_der_Bestimmung_einer_","",ques9$Question)
+ques9$Question <- gsub("Art_unsicher_sind._Bitte_geben_Sie_an._wie_häufig_Sie_in_diesem_Fall_folgende_Dinge_tun._.","",ques9$Question)
+ques9$Question <- gsub(pattern = "Käfer.","",ques9$Question)
+ques9$Question <- gsub(pattern = "Amphibien.Reptilien.","",ques9$Question) 
+ques9$Question <- gsub(pattern = "Schmetterlings.","",ques9$Question)
+ques9$Question <- gsub(pattern = "Pflanzen.","",ques9$Question)
+ques9$Question <- gsub(pattern = "Schmetterlings.","",ques9$Question)
+ques9$Question <- gsub(pattern = "Libellen.","",ques9$Question)
+ques9$Question <- gsub(pattern = "Bienen._","",ques9$Question)
+ques9$Question <- gsub(pattern = "Vögel._","",ques9$Question)
+ques9$Question <- gsub("_"," ", ques9$Question)
+ques9$Question <- gsub(pattern = "\\.","",ques9$Question)
+
+ques9$Question <- trimws(ques9$Question, which = c("left"), whitespace = "[ \t\r\n]")
+ques9$Question <- trimws(ques9$Question, which = c("right"), whitespace = "[ \t\r\n]")
+
+
+
+ques9$Question <- str_replace_all(ques9$Question, 
+                                  c("Ich vermute um welche Art es sich handelt" = "I suspect which species it is",                                                        "Ich melde die Art nicht"= 
+                                    "I do not report the species",
+                                    "Ich melde die Beobachtung auf der taxonomischen Ebene die ich sicher identifizieren kann z B Gattung oder Familie" = 
+                                    "I report the observation at the taxonomic level I can confidently identify e.g. genus or family",
+                                    "Ich bitte eine andere Person meine Bestimmung zu überprüfen" =
+                                    "I ask another person to check my identification",                                                
+                                    "Ich nutze Hilfsmittel zur Bestimmung z B das Internet oder ein Bestimmungsbuch"= 
+                                    "I use aids for identification e.g. the internet or an identification book")) 
+ 
+ques9$Response <- str_replace_all(ques9$Response, 
+                                  c("sehr oft" = "very often" ,
+                                    "oft" = "often" ,
+                                    "manchmal" = "sometimes" ,
+                                    "selten" = "rarely",
+                                    "nie" = "never",
+                                    "weiß nicht" = "don't know"))
+
+ques9$Response <- str_replace_all(ques9$Response, c("very oftenen" = "very often"))
+levels <- c("very often", "often", "sometimes", "rarely", "never", "don't know")
+
+ #wrap the variables
+ques9$Question = swr(ques9$Question)
+###############################################################################
+ques9 <- ques9[,-c(1)]
+
+ques9_wide <- ques9 %>%
+	            group_by(Question, Response) %>%  # grouping by these two variables
+	            tally() %>%  # counting the number of responses
+	            mutate(perc = n / sum(n) * 100) %>%
+	            dplyr::select(-n) %>%
+	            group_by(Question) %>%
+	            spread(Response, perc)
+
+
+ques9_hi_lo <- ques9_wide %>%
+	              dplyr::select(Question,`very often`, `often`,`sometimes`,`rarely`,`never`,`don't know`) %>%
+	              gather(key = response, value = perc, 2:7) 
+
+colnames(ques9_hi_lo) <-c("Question", "response", "perc")
+
+library(stringr)
+
+
+ques9_hi_lo$response <- factor(ques9_hi_lo$response, levels= levels)
+
+(ques9_plot_new <- ggplot(ques9_hi_lo, aes(fill= response, y= perc, x=Question)) + 
+                    geom_bar( position="stack", stat="identity", width=0.5) +
+                    scale_fill_brewer(palette = "BrBG", direction =-1) +
+                    coord_flip()+
+                    theme_classic() +
+                    xlab("")+ 
+                    ylab("Percentage of respondents(%)")+
+                    labs(fill = "Response")+
+                    scale_x_discrete(labels = function(x) str_wrap(x, width = 17))+
+                    theme(axis.text=element_text(size=20, face = "bold"),
+                          axis.title=element_text(size=20,face="bold"),
+                          legend.text = element_text(size=18),
+                          legend.title = element_text(size=20,face="bold"),
+                          panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+
+```
+
+
+```{r echo=FALSE, fig.height=10, fig.width=10, message=FALSE, warning=FALSE}
+
+#detect string and remove empty rows
+
+#Q. Wie teilen Sie sonst ihre Beobachten mit anderen? 
+#- This is the question if "Ich benutze keine Plattform" is chosen in the above
+
+share_obs <- data.frame(Var1 = survey_data$Wie_teilen_Sie_sonst_ihre_Beobachten_mit_anderen.)
+
+share_obs <- share_obs %>% filter(!Var1 == "")
+share_obs <- read.csv("data/share_obs_en.csv", header = T) #from dropbox
+
+#create a word cloud===================================================================
+
+text <- share_obs$Var1
+# Create a corpus  
+docs <- Corpus(VectorSource(text))
+docs <- docs %>%
+        tm_map(removeNumbers) %>%
+        tm_map(removePunctuation) %>%
+        tm_map(stripWhitespace)
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removeWords, stopwords("german"))
+dtm <- TermDocumentMatrix(docs) 
+matrix <- as.matrix(dtm) 
+words <- sort(rowSums(matrix),decreasing=TRUE) 
+df <- data.frame(word = names(words),freq=words)
+
+set.seed(1234) # for reproducibility 
+
+#png("plots/How_do_you_otherwise_share_your_observations_with_others.png", width=12, height=8, units="in", res=300)
+wc1 <- wordcloud(words = df$word, freq = df$freq, min.freq = 1,           
+          max.words=200, random.order=FALSE, rot.per=0.35,scale=c(14,2),         
+          colors=brewer.pal(8, "Dark2"))
+
+#dev.off()
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+#detect string and remove empty rows
+
+#Q. War Ihre Artenbeobachtung oder -berichterstattung im Frühling/Sommer 2020 aufgrund der Corona-Situation anders als in den Vorjahren? 
+
+covid_affect <- data.frame(table(survey_data$War_Ihre_Artenbeobachtung_oder_.berichterstattung_im_Frühling.Sommer_2020_aufgrund_der_Corona.Situation_anders_als_in_den_Vorjahren._))
+
+covid_affect <- covid_affect %>% filter(!Var1 == "")
+covid_affect$Var1 <- str_replace_all(covid_affect$Var1, 
+                                     c("Ja, ich war aktiver als in den anderen Jahren"=
+                                      "Yes, I was more active than in other years",                         
+                                      "Ja, ich war weniger aktiv als in den anderen Jahren"=
+                                      "Yes, I was less active than in the other years",                   
+                                      "Nein, es war mein erstes Jahr" = "No, it was my first year",         
+                                      "Nein, ich bin weitgehend genauso vorgegangen wie in den anderen Jahren" =
+                                      "No, I did largely the same as in other years"))
+
+covid_affect$Var1 <- swr(covid_affect$Var1)
+
+#make a lolipop chart====================================================================
+
+(covid <- covid_affect %>%
+          arrange(Freq) %>%    # First sort by val. This sort the dataframe but NOT the factor levels
+          mutate(name=factor(Var1, levels= Var1)) %>%   # This trick update the factor levels
+          ggplot( aes(x=fct_reorder(Var1,-Freq), y= Freq)) +
+          geom_segment( aes(xend=Var1, yend=0)) +
+          geom_point( size= 6, color="coral3", show.legend = FALSE) +
+          scale_y_continuous(limit = c(0, 700))+
+          coord_flip() +
+          theme_classic() +
+          xlab("Response")+
+          ylab("Frequency")+
+          theme_classic()+
+          theme(axis.text.y = element_text(size = 20, color = "black"), 
+                axis.text.x = element_text(size = 20, color = "black"),
+                axis.title.x = element_text(size = 20, color = "black"),   
+                axis.title.y = element_text(size = 20, color = "black"),
+                legend.position = "none",
+                panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+  
+```
+
+
+
+
+```{r echo=FALSE, fig.width=10, message=FALSE, warning=FALSE}
+#detect string and remove empty rows
+
+#Q. Wenn Sie an den Frühling oder Sommer 2020 denken, wie oft haben Sie an den folgenden Orten nach Arten gesucht?
+areas <- data.frame(survey_data[ , grepl("Wenn_Sie_an_den_Frühling_oder_Sommer_2020_denken._wie_oft_haben_Sie_an_den_folgenden_Orten_nach_Arten_gesucht" , names( survey_data )) ])
+
+
+#title <- c("Wenn Sie an den Frühling oder Sommer 2020 denken, wie oft haben Sie an den folgenden Orten nach Arten gesucht")
+
+names(areas) = c("Protected areas", "Forest", "Wetlands and water bodies", 
+                 "Meadows", "Arable land", "Urban areas and grasslands (e.g. parks)",
+                 "Urban areas - built-up areas (e.g. houses, pavements, street)",
+                 "Remote areas (e.g. more than 50 km from a city)")
+
+areas <- areas %>% filter(!`Protected areas` == "")
+
+areas <-areas %>%  mutate_all(funs(case_when(. == "sehr oft" ~ "very often" ,
+                                             . == "oft" ~ "often" ,
+                                             . ==  "manchmal" ~ "sometimes" ,
+                                             . ==  "selten" ~ "rarely",
+                                             . ==  "nie" ~ "never",
+                                             . == "weiß nicht" ~ "don't know")))
+
+
+#make the variables as factors
+
+areas <- as.data.frame(lapply(areas, factor, 
+                      levels = c( "don't know","never","rarely","sometimes","often","very often" )))
+                                                        
+
+#re do the names to remove the dots in between
+names(areas) = c("Protected areas", "Forest", "Wetlands and water bodies", "Meadows",
+                 "Arable land", "Urban areas and grasslands (e.g. parks)",
+                 "Urban areas - built-up areas (e.g. houses, pavements, street)",
+                 "Remote areas (e.g. more than 50 km from a city)")
+
+(lik1 <- plot(likert(areas), center=2, plot.percents=F,
+              plot.percent.low=T, plot.percent.high=T,
+              legend.position = "right",text.size=15,
+              ordered=T, colors = c("#8c510a","#d8b365","#f6e8c3","#c7eae5","#5ab4ac","#01665e"))+
+              theme(strip.text=element_text(size=50),
+                    axis.text.y = element_text(size = 50, color = "black"),
+                    axis.text.x = element_text(size = 50, color = "black"), 
+                    axis.title.x = element_text(size = 50, color = "black"),   
+                    axis.title.y = element_text(size = 50, color = "black"),
+                    legend.title=element_text(size=50, color = "black"), 
+                    legend.text=element_text(size=50, color = "black"))+
+              ylab("Percentage of respondents (%)"))
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=10}
+
+
+
+#Q.Stellen Sie sich vor, Sie besuchen einen Ort, den Sie schon einmal besucht haben. 
+#Sie sehen eine Art, die Sie bei Ihrem letzten Besuch gemeldet haben. 
+#Wie wahrscheinlich ist es, dass Sie diese neue XXXX- Beobachtung melden, wenn die letzte Beobachtung…? 
+
+#detect string and remove empty rows
+
+report_species <- data.frame(survey_data[ , grepl('Stellen_Sie_sich_vor._Sie_besuchen_einen_Ort._den_Sie_schon_einmal_besucht_haben._' , names( survey_data ) ) ])
+
+colnames(report_species) = c("on the same day", "in the same week", "in the same month", "in the same year", "in a previous year")
+
+
+report_species <- report_species %>%  mutate_all(funs(case_when(. == "überhaupt nicht wahrscheinlich" ~ "not at all likely",
+                                                                . == "wenig wahrscheinlich" ~ "not very likely" ,
+                                                                . ==  "mäßig wahrscheinlich" ~ "moderately likely" ,
+                                                                . ==  "ziemlich wahrscheinlich" ~ "quite likely",
+                                                                . ==  "sehr wahrscheinlich" ~ "very likely",
+                                                                . == "weiß nicht" ~ "don't know")))
+
+report_species <- report_species %>% filter(!`on the same day` == "")
+
+#make the variables as factors
+
+report_species <- data.frame(lapply(report_species, factor, 
+                                    levels = c("not at all likely" , "not very likely" , 
+                                               "moderately likely", "quite likely" ,
+                                               "very likely" , "don't know"))) 
+
+colnames(report_species) = c("on the same day", "in the same week", "in the same month", "in the same year", "in a previous year")
+
+## spread the dataset
+
+#plot a likert chart=======================================================================
+
+(lik2 <- plot(likert(report_species), center=2, 
+              plot.percents=F, plot.percent.low=T,
+              group.order=names(report_species),
+              width = 0.3,plot.percent.high=T,
+              legend.position = "right",text.size=14, 
+              ordered=T, colors = c("#8c510a","#d8b365","#f6e8c3","#c7eae5","#5ab4ac","#01665e"))+
+              theme(strip.text=element_text(size=50),
+                  axis.text.y = element_text(size = 50, color = "black"),
+                  axis.text.x = element_text(size = 50, color = "black"), 
+                  axis.title.x = element_text(size = 50, color = "black"),   
+                  axis.title.y = element_text(size = 50, color = "black"),
+                  legend.title=element_text(size=50, color = "black"), 
+                  legend.text=element_text(size=50, color = "black"))+
+              ylab("Percentage of respondents (%)"))
+
+```
+
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+#Persönliche Angaben
+#1.Ich bin…
+
+#detect string and remove empty rows
+
+gender <- survey_data$Ich_bin
+gender <- data.frame(table(gender[!gender == ""])) 
+gender$Var1 <- str_replace_all(gender$Var1, 
+                               c("divers" = "Diverse", "männlich" = "Male", "weiblich" = "Female"))
+
+colnames(gender) <- c("Gender", "Count")
+gender <- gender %>% mutate(percentage = (Count/sum(Count)*100))
+
+#plot a bar chart===================================================================
+library(wesanderson)
+pal <- wes_palette("Chevalier1", n = 3, type = "discrete")
+
+(gender_plot <- ggplot(gender, aes(x = Gender, y = Count)) +
+                geom_bar(position = position_dodge(), stat = "identity", colour = "black", fill = pal, alpha =0.8) +
+                theme_bw() +
+                ylab("Count") +                             
+                xlab("Gender")  +
+                coord_flip()+
+                theme(axis.text.x = element_text(size = 40, vjust = 1, hjust = 1, color = "black"), 
+                      axis.text.y = element_text(size = 40, color = "black"),
+                      axis.title = element_text(size = 40, face = "plain"),                      
+                      panel.grid = element_blank(),
+                      panel.border = element_rect(color = "black", fill = NA, )))  
+  
+
+```
+
+**Zu welcher Altersklasse gehören Sie?**
+```{r echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE}
+
+#detect string and remove empty rows
+age_group <- data.frame(table(survey_data$Zu_welcher_Altersklasse_gehören_Sie.))
+
+age_group <- age_group %>% filter(!Var1 == "")
+
+#to make a pie chart calculate the cumulative sum
+
+age_group <- age_group %>% 
+            arrange(desc(Var1)) %>%
+            mutate(prop = Freq / sum(Freq) *100) %>%
+            mutate(ypos = cumsum(prop)- 0.5*prop,
+                  centres = cumsum(prop) - prop / 2)
+
+#age_group$Var1 <- paste0(age_group$Var1, " ", "(",age_group$Freq, ")")
+age_group$Var1 <- str_replace(age_group$Var1, "19 oder jünger","19 or younger")
+
+library(ggrepel)
+
+age_group <-age_group%>% 
+            mutate(cs = rev(cumsum(rev(Freq))), 
+                  pos = Freq/2 + lead(cs, 1),
+                  pos = if_else(is.na(pos), Freq/2, pos))
+
+(age_plot <- ggplot(age_group, aes(x = "" , y = Freq, fill = fct_inorder(Var1))) +
+            geom_col(width = 1, show.legend = T, alpha = 1) +
+            coord_polar(theta = "y", start = 0 ) +
+            scale_fill_brewer(palette = "OrRd", direction = -1) +
+            geom_label_repel(aes(y = pos, label = paste(round(age_group$prop), "%"), fill = NULL), 
+                             data = age_group, size=16, show.legend = F, nudge_x = 2) +
+            guides(fill = guide_legend(title = "Age class")) +
+            theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), units = "cm"))+
+            theme_void())
+  
+(age_plot <- age_plot+ theme(legend.text = element_text(size = 30),
+                 legend.title = element_text(size = 30),
+                 legend.position = "right",
+                 legend.spacing = unit(1,"cm"),
+                 panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+
+
+
+
+```
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+#detect the string and remove empty rows
+
+monitoring <- data.frame(table(survey_data$Nehmen_Sie_an_einem_groß_angelegten_standardisierten_Monitoringsystem_teil_.z._B._Tagfalter_Monitoring_Deutschland..))
+
+monitoring <- monitoring %>% filter(!Var1 == "")
+monitoring$Var1 <- str_replace_all(monitoring$Var1, c("Ja" = "Yes", "Nein" = "No"))
+
+
+#create a bar chart==============================================================
+
+(m <- monitoring %>%
+    as.data.frame()  %>%
+    ggplot(., aes(x= Var1, y = Freq)) + 
+    geom_bar(fill = c("#999999", "#E69F00"), position = "dodge", stat = "identity")+
+    coord_flip()+
+    xlab("")+
+    ylab("Frequency")+ 
+    theme_bw()+
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black"), 
+          axis.text=element_text(size=14, face = "bold"),
+          axis.title=element_text(size=16,face="bold"),
+          panel.border = element_rect(colour = "black", fill=NA, size=0.8))+
+    labs(fill = ""))
+
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+#detect sting and remove empty rows
+
+expertise <- data.frame(table(survey_data$Besitzen_Sie_Fachkenntnisse_im_Bereich_des_Biodiversitätsmonitorings._))
+
+expertise <- expertise %>% filter(!Var1 == "")
+
+#for a pie chart calculate the cumulative sum
+
+expertise <- expertise %>% arrange(desc(Var1)) %>%
+            mutate(prop = Freq / sum(Freq) *100) %>%
+            mutate(ypos = cumsum(prop)- 0.5*prop ) 
+
+#create labels
+
+expertise$label <- paste0(round(expertise$prop), "%"," ", "(", expertise$Freq, ")")
+
+expertise$Var1 <- str_replace_all(expertise$Var1, c("Ja" = "Yes", "Nein" = "No"))
+
+#plot the pie chart===================================================================
+
+(exp <- ggplot(expertise, aes(x="", y= prop, fill= Var1)) + geom_bar(stat="identity", width=1)+
+        coord_polar(theta = "y", start=0) + geom_text(aes(label = label ), position = position_stack(vjust = 0.5))+
+        scale_fill_manual(values=c("#dd3497","#fde0dd")) +
+        labs(x = NULL, y = NULL, fill = NULL)+
+        theme_void() + 
+        theme(axis.line = element_blank(),
+              axis.text = element_blank(),
+              axis.ticks = element_blank(),
+              plot.title = element_text(hjust = 0.5, color = "Black"),
+              legend.position="right", 
+              legend.box = "horizontal", legend.title = element_blank(),
+              panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+#detect string and remove empty rows
+
+skills <- data.frame(table(survey_data$Wo_haben_Sie_die_Fachkenntnisse_hauptsächlich_erworben.))
+skills <- skills %>% filter(!Var1 == "")
+
+skills$Var1 <-  gsub("andere (Aus)Bildung", "Other (education)", skills$Var1, fixed=TRUE)
+#we do this because stringr doesnt work well with brackets
+
+
+skills$Var1 <- str_replace_all(skills$Var1,
+                               c("Familie"= "Family",
+                                "Freunde" = "Friends",
+                                "Im Rahmen meiner beruflichen Tätigkeit" = "Within the scope of my professional activity",
+                                "Universität/ Hochschule" =  "University/ College",
+                                "Verband/ Fachgesellschaft" =  "Association/ professional society",
+                                "Vorwiegend eigenständig" = "Predominantly independent"))
+
+skills$fraction <- skills$Freq / sum(skills$Freq)
+
+# Compute the cumulative percentages (top of each rectangle)
+skills$ymax <- cumsum(skills$fraction)
+
+# Compute the bottom of each rectangle
+skills$ymin <- c(0, head(skills$ymax, n=-1))
+
+# Compute label position
+skills$labelPosition <- (skills$ymax + skills$ymin) / 2
+
+# Compute a good label
+skills$label <- paste0(skills$Freq)
+
+# Make the plot====================================================================
+(skills_plot <- ggplot(skills, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill= Var1)) +
+                geom_rect(color = "black") +
+                coord_polar(theta="y") + 
+                xlim(c(2, 4))+
+                scale_fill_brewer(palette=4, direction =-1)+
+                geom_label( x= 3.5, aes(y=labelPosition, label=label),size= 20, show_guide  = F)+
+                labs(fill = "Skills acquired from")+
+                theme_void()+
+                theme(legend.position="right", 
+                          legend.title = element_text(size = 30),
+                          legend.text = element_text(size = 30),
+                          legend.box="vertical",
+                          legend.text.align = 0,
+                          panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+               
+
+```
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+#detect string and remove empty rows
+member <- data.frame(table(survey_data$Sind_Sie_Mitglied_in_einer_Fachgesellschaft_für_eine_bestimmte_Artengruppe_.z.B._GdO._GAC._DDA_etc..))
+
+member <- member %>% filter(!Var1=="")
+
+#calculate the fraction 
+member$fraction <- member$Freq / sum(member$Freq)
+
+# Compute the cumulative percentages (top of each rectangle)
+member$ymax <- cumsum(member$fraction)
+
+# Compute the bottom of each rectangle
+member$ymin <- c(0, head(member$ymax, n=-1))
+
+# Compute label position
+member$labelPosition <- (member$ymax + member$ymin) / 2
+
+# Compute a good label
+member$Var1 <- str_replace_all(member$Var1, c("Ja" = "Yes", "Nein" = "No"))
+member$label <- paste0(member$Var1, "\n","(", member$Freq, ")")
+
+
+# Make the thin donut plot============================================================
+(member_plot <-ggplot(member, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill= Var1)) +
+              geom_rect(color = "black") +
+              geom_text( x=2, aes(y=labelPosition, label=label, color = Var1), size=6) + 
+              scale_fill_brewer(palette="Set1") +
+              scale_color_brewer(palette= "Set1") +
+              coord_polar(theta="y") +
+              xlim(c(-1, 4)) +
+              theme_void() +
+              theme(legend.position = "none",
+                    panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE,results=FALSE}
+#load the German boundary
+DEU <- readRDS("data/gadm36_DEU_1_sp.rds")
+
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(sf)
+
+#load the shapefile for postal codes
+
+postcode_shp <- st_read("data/postalCodesGermany1st2letters.shp")
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# calculate the number of people in each postal code
+
+postcode <- data.frame(table(survey_data$Wie_lauten_die_ersten_zwei_Ziffern_Ihrer_Postleitzahl.))
+
+#remove empty rows and invalid rows
+
+postcode <- postcode %>% filter(!Var1 == c("",0))
+postcode <- postcode %>% filter(!Var1 == c("Ho"))
+colnames(postcode) <- c("pc2","Frequency")
+
+library(stringr)
+postcode$pc2 <- str_pad(postcode$pc2, 2, pad = "0")
+
+#join the shapefile with the dataframe
+
+postcode <- left_join(postcode_shp, postcode, by = "pc2")
+#class(postcode)
+
+#rename the longitude
+colnames(postcode)[7] <- "long"
+library(ggthemes)
+library(viridis)
+
+#plot the number of people in the given postalcodes===================================
+
+(map <- ggplot(DEU, aes(x = long, y = lat, group = group)) +
+       geom_polygon(fill = "grey90",colour = alpha("black",0.8)) +
+      geom_point(data = postcode, aes(group = pc2, size = Frequency),
+             col = "#225ea8", shape = 16, alpha = 0.8) +
+      coord_map() +
+      theme_map() +
+      scale_size_continuous(range = c(5,9))+
+      theme(legend.position = "right",
+            legend.title=element_text(size=30, color = "black"), 
+            legend.text=element_text(size=28, color = "black"),
+            panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+ 
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+#detect string
+
+comments <- data.frame(comments = survey_data$Haben_Sie_noch_weitere_Anmerkungen._Hier_können_Sie_zusätzliche_Kommentare_zu_den_Fragen_oder_zur_Umfrage_abgeben._)
+
+comments <- read.csv("data/comments_en.csv", header =  T) #english version
+
+#create a word cloud=====================================================
+#select text
+text <- comments$comments
+# Create a corpus  
+docs <- Corpus(VectorSource(text))
+docs <- docs %>%
+  tm_map(removeNumbers) %>%
+  tm_map(removePunctuation) %>%
+  tm_map(stripWhitespace)
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removeWords, stopwords("german"))
+dtm <- TermDocumentMatrix(docs) 
+matrix <- as.matrix(dtm) 
+words <- sort(rowSums(matrix),decreasing=TRUE) 
+df <- data.frame(word = names(words),freq=words)
+
+set.seed(1234) # for reproducibility 
+png("plots/Do_you_have_any_other_comments_Here_you_can_make_additional_comments_on_the_questions_or_the_survey.png",width=12, height=8, units="in", res=300)
+
+
+  
+
+wc <- wordcloud(words = df$word, freq = df$freq, min.freq = 1,           
+          max.words=1000, random.order=FALSE, rot.per=0.35,         
+          colors=brewer.pal(5,"Dark2"), 
+          main = "Do you have any other comments? Here you can make additional comments on the questions or the
+survey" )
+
+dev.off()
+
+wc
+
+```
+
+
+
