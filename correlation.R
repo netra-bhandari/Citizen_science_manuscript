@@ -132,6 +132,7 @@ plot(routes_igraph,
 
 library(qgraph)
 library(igraph)
+library(circlize)
 
 #get the data frames in the pca script
 allDF <- surveytypeDF %>%
@@ -166,7 +167,6 @@ tidy_cors <- allDF[,-1] %>%
   as.data.frame() %>%
   mutate(term = names(allDF)[-1]) %>%
   pivot_longer(!term,values_to="r")
-
 
 #tidy some of the names
 tidy_cors$term[which(tidy_cors$term=="Frq")] <- "frequency activity"
