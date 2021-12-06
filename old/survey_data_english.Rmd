@@ -9,12 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r message:=FALSE, warning=FALSE, include=FALSE}
-setwd("D:/github/Citizen_science_manuscript")
-#path to save figures
-path <- "D:/github/Citizen_science_manuscript"
-
-#load the following libraries
+```{r message:=FALSE, warning=FALSE, include=FALSE}#load the following libraries
 
 library(tidyverse)
 library(dplyr)

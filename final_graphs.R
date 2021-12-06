@@ -1,5 +1,6 @@
 #final graphs
 library(tidyverse)
+library(sf)
 #load libraries in Netra's script
 
 source('helper_functions.R', encoding = 'UTF-8')
@@ -292,4 +293,170 @@ plot_grid(plot2a,plot2b,
           labels=c("a) Active vs opportunistic","b) Active search",
                    "c) Opportunistic search","d) Locations"),
           scale = c(0.9,0.9,0.9,0.9))
+
+
+
+#### SI fig 1 ######
+
+#run the start of the processing script
+survey_data <- subset(survey_data, ID %in% sample_data$ID)
+
+#gender - "Ich_bin" 
+genderDF <- data.frame(Gender = c("not given", "diverse", "male", "female"),
+                       Number = as.numeric(table(survey_data$Ich_bin)))
+g1 <- ggplot(genderDF)+
+  geom_col(aes(x=Gender, y=Number))+
+  coord_flip()+
+  theme_few()
+
+#age - "Zu_welcher_Altersklasse_gehoren_Sie_" 
+ageDF <- data.frame(Age.class = names(table(survey_data$Zu_welcher_Altersklasse_gehoren_Sie_)),
+                       Number = as.numeric(table(survey_data$Zu_welcher_Altersklasse_gehoren_Sie_)))
+ageDF$Age.class[1:2]<-c("not given","under 20")
+ageDF$Age.class <- factor(ageDF$Age.class, levels=ageDF$Age.class)
+
+g2 <- ggplot(ageDF)+
+  geom_col(aes(x=Age.class, y=Number))+
+  xlab("Age class")+
+  coord_flip()+
+  theme_few()
+
+cowplot::plot_grid(g1,g2,nrow=2, labels=c("a","b"))
+
+#### SI fig 2 ######
+
+#postcode data
+postcode_shp <- st_read("C:/Users/db40fysa/Nextcloud/sMon/Gis-DataData/AdminBoundaries/Postleitzahl_DE/postalCodesGermany1st2letters.shp")
+postcode <- data.frame(table(survey_data$Wie_lauten_die_ersten_zwei_Ziffern_Ihrer_Postleitzahl_))
+
+#remove empty rows and invalid rows
+postcode <- postcode %>% filter(!Var1 == c("",0))
+postcode <- postcode %>% filter(!Var1 == c("Ho"))
+colnames(postcode) <- c("pc2","Frequency")
+
+library(stringr)
+postcode$pc2 <- str_pad(postcode$pc2, 2, pad = "0")
+
+#join the shapefile with the dataframe
+postcode <- left_join(postcode_shp, postcode, by = "pc2")
+#class(postcode)
+
+#rename the longitude
+colnames(postcode)[7] <- "long"
+library(ggthemes)
+library(viridis)
+
+#plot the number of people in the given postalcodes
+
+DEU <- raster::getData('GADM', country='DEU', level=1)
+
+(map <- ggplot(DEU, aes(x = long, y = lat, group = group)) +
+   geom_polygon(fill = "grey95",colour = alpha("black",0.8)) +
+   geom_point(data = postcode, aes(group = pc2, colour = Frequency),
+              shape = 16, size=3) +
+  scale_colour_viridis_c("Number")+
+   coord_map() +
+   theme_map() +
+   theme(legend.position = "right",
+         legend.title=element_text(size=20, color = "black"), 
+         legend.text=element_text(size=18, color = "black"),
+         panel.border = element_rect(colour = "black", fill=NA, size=0.8)))
+
+
+#### SI fig 3 ######
+
+experience <- data.frame(survey_data$Wie_viele_Jahre_sind_Sie_schon_in_der_Erfassung_der_Artenbeobachtungsdaten_aktiv_)
+
+colnames(experience) <- "years_of_experience"
+experience <- drop_na(experience)
+median(experience$years_of_experience) #11
+IQR(experience$years_of_experience) #26
+
+experience <- subset(experience, years_of_experience<75)
+
+(experience_plot <- ggplot(experience, aes(x = years_of_experience)) +                
+    geom_histogram(binwidth = 3, colour = "black", fill = "#CD8500") +    
+    theme_bw() +  
+    coord_flip()+
+    ylab("Number\n") +                                                   
+    xlab("Years of experience")  +                            
+    theme(axis.text = element_text(size = 11,color = "black"),                          
+          axis.title.x = element_text(size = 13, face = "plain"),
+          axis.title.y = element_text(size = 13), 
+          panel.grid = element_blank(),
+          panel.border = element_rect(color = "black", fill = NA)))  
+
+regularity <- data.frame(table(survey_data$Wie_oft_haben_Sie_im_Fruhling_oder_Sommer_2020_Artdaten_gesammelt__))
+regularity <- regularity %>% filter(!Var1 == "")
+regularity$Var1 <-  str_replace_all(regularity$Var1, 
+                                    c("all zwei Woche/ fast all zwei Woche"="Every other week/\nalmost every other week",
+                                      "alle zwei Monate / fast alle zwei Monate" ="Every other month/\nalmost every other month",
+                                      "Monatlich / fast monatlich" = "Monthly/almost monthly",
+                                      "Seltener"= "Rarely",
+                                      "Täglich / fast täglich" = "Daily/almost daily",
+                                      "Wöchentlich / fast wöchentlich" = "Weekly/almost weekly"))
+
+colnames(regularity) <- c("Regularity","Frequency")
+
+regularity$Regularity <- factor(regularity$Regularity,
+                                levels = c("Daily/almost daily", "Weekly/almost weekly", 
+                                           "Every other week/\nalmost every other week",
+                                           "Monthly/almost monthly", 
+                                           "Every other month/\nalmost every other month", "Rarely"))
+
+
+
+# Make the plot=
+(regularity_plot <- ggplot(regularity, aes(x=Regularity,y=Frequency)) +                
+    geom_col(fill = "#CD8500")+  
+    coord_flip()+
+    theme_bw() +                                                      
+    ylab("Number\n") +                                                   
+    xlab("Frequency")  +                            
+    theme(axis.text = element_text(size = 11,color = "black"),                          
+          axis.title.x = element_text(size = 13, face = "plain"),
+          axis.title.y = element_text(size = 13), 
+          panel.grid = element_blank(),
+          panel.border = element_rect(color = "black", fill = NA))) 
+
+
+cowplot::plot_grid(experience_plot,
+                   regularity_plot,
+                   nrow=2, labels=c("a","b"))
+
+#### SI fig 4 ######
+
+#main taxon group 
+taxaDF <- data.frame(Taxa = names(table(sample_data$Taxa)),
+                       Number = as.numeric(table(sample_data$Taxa)))
+taxaDF <- arrange(taxaDF, desc(Number))
+taxaDF$OrigTaxa <- taxaDF$Taxa
+taxaDF$Taxa <- c("Birds","Plants","Other","Amphibians/Reptiles","Butterflies/Moths",
+                 "Beetles","Dragonflies","Multiple","Bees")
+taxaDF$Taxa <- factor(taxaDF$Taxa, levels=taxaDF$Taxa)
+
+ggplot(taxaDF)+
+  geom_col(aes(x=Taxa, y=Number))+
+  ylim(0,375)+
+  coord_flip()+
+  theme_few()
+
+#get percent that subset for each taxa
+sample_data$Specialism <- sample_data$Erfassen_Sie_vorrangig_Beobachtungsdaten_uber_eine_bestimmte_Untergruppe_z_B_eine_Familie_innerhalb_dieser_Artengruppe_
+table(sample_data$Specialism)
+taxaDF_Subset <- data.frame(Taxa =
+                              names(table(sample_data$Taxa[sample_data$Specialism=="Ja, ich erfasse vorrangig Daten über eine bestimmte Untergruppe."])),
+                     Number = as.numeric(table(sample_data$Taxa[sample_data$Specialism=="Ja, ich erfasse vorrangig Daten über eine bestimmte Untergruppe."])))
+taxaDF$Subset <- taxaDF_Subset$Number[match(taxaDF$OrigTaxa,taxaDF_Subset$Taxa)]
+taxaDF$percent <- round(taxaDF$Subset/taxaDF$Number*100)
+
+#add the numbers to the plot
+ggplot(taxaDF)+
+  geom_col(aes(x=Taxa, y=Number,fill=percent))+
+  scale_fill_viridis_c("% specialize")+
+  theme_few()+
+  theme(legend.position="top")+
+  coord_flip()
+ 
+
 

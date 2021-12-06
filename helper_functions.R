@@ -55,6 +55,7 @@ swr = Vectorize(swr)
 #functions for pca analysis
 
 format4PCA <- function(df){
+  
   #convert likert scale to ordinal scale
   df <- ordinal_fn(df)
   df <- mutate_all(df, function(x) as.numeric(as.character(x)))
@@ -73,8 +74,24 @@ plotPCA <- function(pca_rotated){
                  colour="gray80")+
     geom_text_repel(data=loadings, aes(x=RC1, y=RC2, label=Names), 
                     size=2.5,colour="black")+
-    scale_x_continuous("Principal Component 1")+
-    scale_y_continuous("Principal Component 2")+
+    scale_x_continuous("PC 1")+
+    scale_y_continuous("PC 2")+
+    theme_few()
+}
+
+plotPCA2 <- function(pca_rotated){
+  
+  loadings <- as.data.frame(unclass(pca_rotated$loadings))
+  loadings$Names<-rownames(loadings)
+  
+  ggplot()+
+    geom_segment(data=loadings, aes(x=0, y=0, xend=RC1, yend=RC2), 
+                 arrow=arrow(length=unit(0.2,"cm")),
+                 colour="gray80")+
+    geom_text_repel(data=loadings, aes(x=RC1, y=RC2, label=Names), 
+                    size=3,colour="black")+
+    scale_x_continuous("PC 1")+
+    scale_y_continuous("PC 2")+
     theme_few()
 }
 

@@ -5,9 +5,9 @@ A study to analyse citizen science survey data and understand how people record 
 ## Scripts
 
 In this folder the main scripts are - 
-1. survey_data_english.Rmd - the main script to run for data analysis and visualisation
-2. plots_for_ms.Rmd - the secondary script to save and resize plots for the manuscript
-3. processing.R - a script to clean the raw data and align the different taxa questions in the same columns (work in progress)
-4. pca.R - PCA analysis for selected focal taxa (work in progress)
-5. questions.R - a script to run the models that test the specific questions (work in progress)
-6. correlations.R - a script to explore pair-wise correlations
+1. processing.R - a script to clean the raw data and align the different taxa questions in the same columns (work in progress)
+2. pca.R - PCA analysis for selected focal taxa
+3. questions.R - a script to run the models that test the specific questions (not needed for paper)
+4. correlations.R - a script to explore pair-wise correlations
+5. final_graphs.R - script to produce the likert and bar graphs (e.g. Figs 1 and 2 in the paper)
+6. survey_effort_trap.R - script to explore variation in effort and the traps
